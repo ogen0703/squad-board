@@ -276,8 +276,18 @@ const nameOf = (id) => (mById(id) || {}).name || "?";
 function setHint() {
   if (!sel) { $("hint").innerHTML = "選手をタップ → 入れ替えたい選手(または空き枠・サブ・メンバー外の欄)をタップ"; return; }
   const t = T(); const id = sel.kind === "slot" ? t.lineup[sel.i] : sel.id;
-  $("hint").innerHTML = id ? `<b>${esc(nameOf(id))}</b> を選択中 → 行き先をタップ(もう一度タップで解除)` : `空き枠を選択中 → 入れる選手をタップ`;
+  const other = view === "A" ? "B" : "A";
+  $("hint").innerHTML = id ? `<b>${esc(nameOf(id))}</b> を選択中 → 行き先をタップ(もう一度タップで解除) <button class="btn small" id="move-team" data-id="${esc(id)}">${other}チームへ移す</button>` : `空き枠を選択中 → 入れる選手をタップ`;
 }
+$("hint").addEventListener("click", async (e) => {
+  const b = e.target.closest("#move-team"); if (!b) return;
+  const id = b.dataset.id, other = view === "A" ? "B" : "A", name = nameOf(id);
+  const t = normTeam(T(), view); pushHist(t);
+  t.lineup = t.lineup.map(x => x === id ? null : x); t.subs = t.subs.filter(x => x !== id);
+  teams[view] = t; sel = null;
+  try { await db.doc("members/" + id).update({ team: other }); } catch (err) {}
+  render(); save(t, `${name}を${other}チームに移した(${other}チームではメンバー外に入っています)`);
+});
 
 function renderMembers() {
   $("m-count").textContent = `${members.length}人(A ${teamMembers("A").length} / B ${teamMembers("B").length})`;
