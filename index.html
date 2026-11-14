@@ -181,12 +181,6 @@ textarea { width: 100%; min-height: 110px; border: 1px solid var(--line); border
         </div>
         <div class="status" id="io-msg"></div>
       </div>
-      <div class="panel" id="sync-panel">
-        <h2>スマホとiPadで同期</h2>
-        <div class="sub" id="sync-state">準備中…</div>
-        <div id="sync-body"></div>
-        <div class="status" id="sync-msg"></div>
-      </div>
       <div class="panel">
         <div class="bar"><h2>部員一覧</h2><span class="grow"></span><span class="sub" id="m-count"></span></div>
         <div class="tw"><table class="members" id="m-table"></table></div>
@@ -196,10 +190,6 @@ textarea { width: 100%; min-height: 110px; border: 1px solid var(--line); border
   </section>
 </div>
 
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script src="firebase-config.js"></script>
 <script>
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -436,7 +426,7 @@ const persist = () => { try { localStorage.setItem(KEY, JSON.stringify(store)); 
 const snap = (col) => ({ docs: Object.entries(store[col] || {}).map(([id, v]) => ({ id, data: () => v })) });
 const emit = (col) => listeners[col].forEach(f => f(snap(col)));
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
-const localDb = {
+db = {
   collection: (col) => ({
     add: async (v) => { store[col] = store[col] || {}; store[col][uid()] = v; persist(); emit(col); },
     onSnapshot: (f) => { listeners[col].push(f); f(snap(col)); return () => {}; },
@@ -450,94 +440,26 @@ const localDb = {
 try { navigator.storage && navigator.storage.persist && navigator.storage.persist(); } catch (e) {}
 
 /* 書き出し・読み込み */
-const currentData = () => ({ members: Object.fromEntries(members.map(({ id, ...v }) => [id, v])), teams: Object.fromEntries(["A", "B"].filter(k => teams[k]).map(k => { const { history, ...v } = teams[k]; return [k, v]; })) });
 $("ex-btn").addEventListener("click", () => {
-  const blob = new Blob([JSON.stringify({ app: "squad-board", v: 1, at: new Date().toISOString(), ...currentData() }, null, 1)], { type: "application/json" });
+  const blob = new Blob([JSON.stringify({ app: "squad-board", v: 1, at: new Date().toISOString(), ...store }, null, 1)], { type: "application/json" });
   const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
   const d = new Date(); a.download = `スカッドボード_${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}.json`;
-  document.body.append(a); a.click(); a.remove(); $("io-msg").textContent = "書き出した。";
+  document.body.append(a); a.click(); a.remove(); $("io-msg").textContent = "書き出した。ファイルを移したい端末に送ってね。";
 });
-async function replaceAll(d) {
-  for (const m of members) await db.doc("members/" + m.id).delete();
-  for (const [id, v] of Object.entries(d.members || {})) await db.doc("members/" + id).set(v);
-  for (const k of ["A", "B"]) await db.doc("teams/" + k).set((d.teams || {})[k] || blankTeam());
-  teams = { A: null, B: null };
-}
 $("im-file").addEventListener("change", async (e) => {
   const f = e.target.files[0]; if (!f) return;
   try {
     const d = JSON.parse(await f.text()); if (!d || typeof d.members !== "object") throw 0;
     $("io-msg").innerHTML = `部員${Object.keys(d.members).length}人のデータで今の内容を置きかえる? <button class="btn small primary" id="im-yes">置きかえる</button> <button class="btn small" id="im-no">やめる</button>`;
-    $("im-yes").onclick = async () => { $("io-msg").textContent = "読み込み中…"; try { await replaceAll(d); $("io-msg").textContent = "読み込んだ。"; } catch (err) { $("io-msg").textContent = "読み込めなかった。通信を確認してね。"; } };
+    $("im-yes").onclick = () => { store = { members: d.members || {}, teams: d.teams || {} }; persist(); teams = { A: null, B: null }; emit("members"); emit("teams"); $("io-msg").textContent = "読み込んだ。"; };
     $("im-no").onclick = () => { $("io-msg").textContent = ""; };
   } catch (err) { $("io-msg").textContent = "このファイルは読み込めなかった。スカッドボードで書き出したファイルを選んでね。"; }
   e.target.value = "";
 });
 
-/* 同期(Firebase) */
-const CODE_KEY = "squad-board-code";
-const getCode = () => { try { return localStorage.getItem(CODE_KEY) || ""; } catch (e) { return ""; } };
-const setCode = (c) => { try { c ? localStorage.setItem(CODE_KEY, c) : localStorage.removeItem(CODE_KEY); } catch (e) {} };
-const newCode = () => { const ch = "abcdefghjkmnpqrstuvwxyz23456789"; let r = ""; const a = crypto.getRandomValues(new Uint8Array(12)); a.forEach((v, i) => { r += ch[v % ch.length]; if (i === 3 || i === 7) r += "-"; }); return r; };
-let fs = null, unsubs = [];
-function subscribe() {
-  unsubs.forEach(u => { try { u(); } catch (e) {} }); unsubs = [];
-  members = []; teams = { A: null, B: null };
-  unsubs.push(db.collection("members").onSnapshot(s => { members = s.docs.map(d => ({ id: d.id, ...d.data() })).filter(m => m.name); render(); }, () => syncMsg("部員を読み込めなかった。")));
-  unsubs.push(db.collection("teams").onSnapshot(s => { s.docs.forEach(d => { if (d.id === "A" || d.id === "B") teams[d.id] = d.data(); }); render(); }, () => {}));
-}
-const syncMsg = (t) => { $("sync-msg").textContent = t; };
-function cloudDb(code) {
-  const base = fs.collection("boards").doc(code);
-  return { collection: (c) => base.collection(c), doc: (p) => { const [c, id] = p.split("/"); return base.collection(c).doc(id); } };
-}
-async function connect(code, { upload } = {}) {
-  syncMsg("つないでいます…");
-  try {
-    if (!firebase.auth().currentUser) await firebase.auth().signInAnonymously();
-    const cdb = cloudDb(code);
-    if (upload) {
-      const local = { members: store.members || {}, teams: store.teams || {} };
-      const batch = fs.batch();
-      Object.entries(local.members).forEach(([id, v]) => batch.set(cdb.doc("members/" + id), v));
-      Object.entries(local.teams).forEach(([k, v]) => { const { history, ...rest } = v || {}; batch.set(cdb.doc("teams/" + k), rest); });
-      await batch.commit();
-    }
-    db = cdb; setCode(code); subscribe(); renderSync(); syncMsg(upload ? "このスマホのデータをのせた。iPadで同じ合言葉を入れてね。" : "つながった。");
-  } catch (e) { syncMsg("つなげなかった。合言葉と通信を確認してね。"); db = localDb; subscribe(); renderSync(); }
-}
-function renderSync() {
-  const code = getCode(), on = db !== localDb;
-  if (!fs) { $("sync-state").textContent = "同期の準備中です(管理者がFirebaseを設定すると使えるようになります)。今はこの端末の中だけに保存されます。"; $("sync-body").innerHTML = ""; return; }
-  $("conn").textContent = on ? `同期中(合言葉 ${code})。変更はほかの端末にもすぐ反映されます。` : "この端末の中に自動で保存されます";
-  if (on) {
-    $("sync-state").innerHTML = `<b class="live-on">同期中</b> 合言葉:<b style="font-family:var(--f-num);font-size:1.2rem;letter-spacing:.06em">${esc(code)}</b>`;
-    $("sync-body").innerHTML = `<div class="bar"><button class="btn small" id="sy-copy">合言葉をコピー</button><span class="grow"></span><button class="btn small" id="sy-off">この端末の同期をやめる</button></div><div class="sub">iPadなどほかの端末では、ここで同じ合言葉を入れて「つなぐ」を押してね。合言葉を知っている人は誰でも見て編集できます。</div>`;
-    $("sy-copy").onclick = async () => { try { await navigator.clipboard.writeText(code); syncMsg("コピーした"); } catch (e) { syncMsg(code); } };
-    $("sy-off").onclick = () => { setCode(""); db = localDb; subscribe(); renderSync(); syncMsg("この端末だけの保存に戻した(同期先のデータは消えていません)。"); };
-  } else {
-    $("sync-state").textContent = "まだ同期していません。データはこの端末の中だけにあります。";
-    $("sync-body").innerHTML = `<div style="display:grid;gap:10px">
-      <div class="bar"><button class="btn primary" id="sy-new">この端末のデータで同期を始める</button></div>
-      <div class="sub">最初の1台(データが入っているスマホ)で押すと合言葉ができます。</div>
-      <div class="bar"><input type="text" id="sy-code" placeholder="合言葉(例 ab3d-ef6h-jk9m)" autocapitalize="off" autocomplete="off" style="flex:1"><button class="btn" id="sy-join">つなぐ</button></div>
-      <div class="sub">2台目以降(iPadなど)は、1台目の合言葉を入れて「つなぐ」。この端末に入っていたデータは使われず、同期先の内容が表示されます。</div></div>`;
-    $("sy-new").onclick = () => connect(newCode(), { upload: true });
-    $("sy-join").onclick = () => { const c = $("sy-code").value.trim().toLowerCase(); if (c.length < 12) return syncMsg("合言葉は12文字以上です。"); connect(c); };
-  }
-}
-
 /* 起動 */
-db = localDb;
-try {
-  if (window.firebase && window.FIREBASE_CONFIG && window.FIREBASE_CONFIG.apiKey) {
-    firebase.initializeApp(window.FIREBASE_CONFIG); fs = firebase.firestore();
-    try { fs.settings({ ignoreUndefinedProperties: true, merge: true }); } catch (e) {}
-    try { fs.enablePersistence({ synchronizeTabs: true }).catch(() => {}); } catch (e) {}
-  }
-} catch (e) { fs = null; }
-subscribe(); renderSync();
-if (fs && getCode()) connect(getCode());
+db.collection("members").onSnapshot(s => { members = s.docs.map(d => ({ id: d.id, ...d.data() })).filter(m => m.name); render(); });
+db.collection("teams").onSnapshot(s => { s.docs.forEach(d => { if (d.id === "A" || d.id === "B") teams[d.id] = d.data(); }); render(); });
 render();
 if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
 </script>
