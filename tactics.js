@@ -75,9 +75,10 @@
   function drawToken(g, p, i) {
     const tg = svgEl("g", { transform: `translate(${p.x},${p.y})`, "data-tok": i, class: "tok" }, g);
     if (p.side === "ball") {
-      svgEl("circle", { r: 1.25, fill: "#fff", stroke: "#111", "stroke-width": ".25" }, tg);
-      svgEl("path", { d: "M0,-.55 L.52,-.17 L.32,.45 L-.32,.45 L-.52,-.17Z", fill: "#111" }, tg);
-      svgEl("circle", { r: 3, fill: "transparent" }, tg);
+      const bg = svgEl("g", { transform: "scale(1.6)" }, tg);
+      svgEl("circle", { r: 1.25, fill: "#fff", stroke: "#111", "stroke-width": ".22" }, bg);
+      svgEl("path", { d: "M0,-.55 L.52,-.17 L.32,.45 L-.32,.45 L-.52,-.17Z", fill: "#111" }, bg);
+      svgEl("circle", { r: 3.8, fill: "transparent" }, tg);
       return;
     }
     const our = p.side === "our"; const m = our && p.id ? mById(p.id) : null;
