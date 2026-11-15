@@ -1,0 +1,258 @@
+/* スカッドボード v3:クラブ公式サイト風。紺のクラブバー、チームカラーの帯、縦長の太い数字 */
+:root {
+  --bg: #eef1f4; --surface: #ffffff; --ink: #0f1d33; --muted: #5a6678; --line: #d5dbe3; --soft: #f5f7fa;
+  --clubbar: #0f1d33; --clubbar-ink: #ffffff; --gold: #f2c230;
+  --a: #1e4fd6; --b: #c8102e; --team: var(--a);
+  --turf: #1f6b3b; --turf-2: #1b6035; --chalk: rgba(255,255,255,.72);
+  --ok: #13804a; --warn: #b4471a; --sel: #f2c230;
+  --f-body: "Zen Kaku Gothic New", "Hiragino Sans", "Yu Gothic", system-ui, sans-serif;
+  --f-num: "Barlow Condensed", "Arial Narrow", system-ui, sans-serif;
+  --r: 6px; --tabbar-h: 62px;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0a1322; --surface: #121e35; --ink: #e8edf5; --muted: #93a0b4; --line: #23314c; --soft: #0f1a2e;
+  --clubbar: #060d1a; --a: #5b86ff; --b: #ff5a6e; --turf: #1a5a32; --turf-2: #17502c; --ok: #4cc583; --warn: #ff8a5c; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0a1322; --surface: #121e35; --ink: #e8edf5; --muted: #93a0b4; --line: #23314c; --soft: #0f1a2e;
+  --clubbar: #060d1a; --a: #5b86ff; --b: #ff5a6e; --turf: #1a5a32; --turf-2: #17502c; --ok: #4cc583; --warn: #ff8a5c; color-scheme: dark }
+:root.team-B { --team: var(--b) }
+
+* { box-sizing: border-box }
+html, body { margin: 0 }
+body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 14px; line-height: 1.55;
+  -webkit-tap-highlight-color: transparent; overscroll-behavior-y: none; padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px) + 16px) }
+button, select, input, textarea { font: inherit; color: inherit }
+h1, h2 { margin: 0 }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0) }
+.sub { color: var(--muted); font-size: .82rem }
+.grow { flex: 1 }
+[hidden] { display: none !important }
+
+/* クラブバー */
+.clubbar { background: var(--clubbar); color: var(--clubbar-ink); padding-top: env(safe-area-inset-top, 0px) }
+.clubbar-in { max-width: 1120px; margin: 0 auto; padding: 10px max(16px, env(safe-area-inset-left, 0px)); display: flex; align-items: center; gap: 10px }
+.crest { width: 26px; color: var(--gold); display: grid }
+.club-txt { display: grid; line-height: 1.25 }
+.club-txt b { font-weight: 900; font-size: 1.02rem; letter-spacing: .04em }
+.club-txt span { font-size: .72rem; opacity: .6 }
+
+.wrap { max-width: 1120px; margin: 0 auto; padding: 16px max(16px, env(safe-area-inset-right, 0px)) 0 max(16px, env(safe-area-inset-left, 0px)); display: grid; gap: 16px }
+main > section { display: grid; gap: 16px; min-width: 0 }
+.grid { display: grid; grid-template-columns: minmax(0, 470px) minmax(0, 1fr); gap: 16px; align-items: start }
+.col { display: grid; gap: 16px; min-width: 0 }
+@media (max-width: 860px) { .grid { grid-template-columns: minmax(0, 1fr) } }
+
+/* ブロックと見出し:左にチームカラーの太い線 */
+.block { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 16px; display: grid; gap: 12px; min-width: 0 }
+.sec-h { font-weight: 900; font-size: 1.02rem; letter-spacing: .02em; padding-left: 10px; border-left: 4px solid var(--team); line-height: 1.2 }
+.pagehead { display: flex; align-items: center; gap: 12px; flex-wrap: wrap }
+.pagehead h1 { font-weight: 900; font-size: 1.6rem; letter-spacing: .02em; flex: 1 }
+.bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center }
+.field-row { display: grid; grid-template-columns: auto 1fr; gap: 8px }
+@media (max-width: 380px) { .field-row { grid-template-columns: 1fr } }
+
+/* 部品 */
+.btn { border: 1px solid var(--line); background: var(--surface); padding: 7px 13px; border-radius: var(--r); cursor: pointer; font-weight: 700; font-size: .9rem; line-height: 1.3 }
+.btn.primary { background: var(--team); border-color: var(--team); color: #fff }
+.btn.small { padding: 4px 10px; font-size: .8rem }
+.btn:disabled { opacity: .45; cursor: default }
+.btn:focus-visible, .tab:focus-visible, .slot:focus-visible, .chip:focus-visible, select:focus-visible, input:focus-visible, textarea:focus-visible { outline: 3px solid var(--sel); outline-offset: 2px }
+select, input[type=text], input[type=number], input[type=date] { border: 1px solid var(--line); background: var(--surface); border-radius: var(--r); padding: 7px 9px; min-width: 0 }
+textarea { width: 100%; min-height: 110px; border: 1px solid var(--line); border-radius: var(--r); padding: 9px; background: var(--surface) }
+.hint { font-size: .8rem; color: var(--muted); min-height: 1.4em }
+.hint b { color: var(--ink) }
+.status { font-size: .82rem; color: var(--muted) }
+.switch { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; cursor: pointer }
+.switch input { width: 18px; height: 18px; accent-color: var(--team) }
+.live-on { color: var(--ok) }
+.confirm { display: inline-flex; gap: 6px; align-items: center; flex-wrap: wrap; font-size: .85rem }
+.empty-state { text-align: center; color: var(--muted); padding: 22px 8px }
+.badge { display: inline-block; font-size: .66rem; padding: 0 6px; border-radius: 3px; background: var(--soft); color: var(--muted); font-weight: 700; margin-left: 2px; border: 1px solid var(--line) }
+.badge.warn { background: color-mix(in srgb, var(--warn) 14%, transparent); color: var(--warn); border-color: transparent }
+.badge.go { background: color-mix(in srgb, var(--ok) 14%, transparent); color: var(--ok); border-color: transparent }
+
+/* チームの帯(この画面のいちばんの見せ場) */
+.teamband { position: relative; overflow: hidden; display: flex; align-items: center; gap: 14px; padding: 14px 16px 14px 0; border-radius: var(--r); color: #fff;
+  background: linear-gradient(115deg, transparent 0 58%, rgba(255,255,255,.08) 58% 64%, transparent 64% 70%, rgba(255,255,255,.08) 70% 73%, transparent 73%), var(--team) }
+.team-letter { font-family: var(--f-num); font-style: italic; font-weight: 800; font-size: 5.4rem; line-height: .8; width: 86px; text-align: center; margin: -6px 0 -10px; color: rgba(255,255,255,.95) }
+.teamband-txt { flex: 1; display: grid; min-width: 0 }
+.teamband-txt h1 { font-weight: 900; font-size: 1.45rem; letter-spacing: .04em }
+.teamband-txt span { font-size: .8rem; opacity: .85 }
+.ab { display: flex; background: rgba(0,0,0,.22); border-radius: 999px; padding: 3px }
+.ab-btn { border: 0; background: none; color: #fff; font-family: var(--f-num); font-weight: 800; font-style: italic; font-size: 1.15rem; width: 40px; height: 34px; border-radius: 999px; cursor: pointer }
+.ab-btn[aria-selected="true"] { background: #fff; color: var(--team) }
+
+/* ピッチ */
+.pitch { position: relative; width: 100%; aspect-ratio: 68 / 92; border-radius: var(--r); overflow: hidden; background: repeating-linear-gradient(180deg, var(--turf) 0 10%, var(--turf-2) 10% 20%); touch-action: manipulation }
+.pitch svg.lines { position: absolute; inset: 0; width: 100%; height: 100% }
+.slot { position: absolute; transform: translate(-50%, -50%); width: 22%; display: grid; justify-items: center; gap: 1px; background: none; border: 0; padding: 0; cursor: pointer; color: #fff; touch-action: none }
+.shirt { width: 42px; height: 42px; border-radius: 50%; display: grid; place-items: center; font-family: var(--f-num); font-weight: 800; font-size: 1.3rem; background: var(--team); color: #fff; border: 2px solid #fff; box-shadow: 0 2px 0 rgba(0,0,0,.25); position: relative }
+.slot.empty .shirt { background: rgba(255,255,255,.14); color: #fff; border: 2px dashed rgba(255,255,255,.75); box-shadow: none }
+.slot.gk .shirt { background: var(--gold); color: #0f1d33 }
+.slot .nm { font-size: .78rem; font-weight: 900; line-height: 1.2; text-shadow: 0 1px 2px rgba(0,0,0,.75); max-width: 100%; overflow-wrap: anywhere; text-align: center }
+.slot .ps { font-family: var(--f-num); font-weight: 700; font-size: .7rem; letter-spacing: .08em; opacity: .85; text-shadow: 0 1px 2px rgba(0,0,0,.6) }
+.slot.selected .shirt, .chip.selected { outline: 3px solid var(--sel); outline-offset: 2px }
+.slot.subbed .shirt::after { content: "↑"; position: absolute; top: -6px; right: -8px; font-size: .75rem; background: var(--ok); color: #fff; border-radius: 50%; width: 17px; height: 17px; display: grid; place-items: center; font-family: var(--f-body); border: 1.5px solid #fff }
+.slot.drop .shirt, .chip.drop, .zone.drop { outline: 3px dashed var(--sel); outline-offset: 3px }
+.ghost { position: fixed; z-index: 50; pointer-events: none; transform: translate(-50%, -60%) scale(1.12); opacity: .92 }
+
+/* ベンチ */
+.zone { border: 1px dashed var(--line); border-radius: var(--r); padding: 8px; display: flex; flex-wrap: wrap; gap: 6px; min-height: 46px; align-items: center; background: var(--soft) }
+.zone.target { border-color: var(--sel) }
+.zone .lab { width: 100%; font-size: .74rem; color: var(--muted); font-weight: 700 }
+.chip { display: inline-flex; align-items: center; gap: 7px; border: 1px solid var(--line); background: var(--surface); border-radius: var(--r); padding: 3px 9px 3px 3px; cursor: pointer; font-weight: 700; font-size: .88rem; touch-action: pan-y }
+.chip .no { font-family: var(--f-num); font-weight: 800; min-width: 26px; height: 26px; border-radius: 4px; display: grid; place-items: center; background: var(--team); color: #fff; font-size: .95rem }
+.chip .p { font-family: var(--f-num); color: var(--muted); font-size: .8rem; letter-spacing: .05em; font-weight: 700 }
+.chip.out { opacity: .6 }
+.chip.out .no { background: var(--muted) }
+
+/* 表 */
+.tw { overflow-x: auto }
+table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums }
+th, td { text-align: left; padding: 7px 7px; border-bottom: 1px solid var(--line); white-space: nowrap }
+th { font-size: .72rem; color: var(--muted); font-weight: 700 }
+td.no { font-family: var(--f-num); font-weight: 800; font-size: 1.15rem; width: 40px; color: var(--team) }
+td.ps { font-family: var(--f-num); font-weight: 700; letter-spacing: .04em }
+tr.sec td { background: var(--soft); font-weight: 900; font-size: .8rem; border-top: 2px solid var(--team) }
+.members td input, .members td select { width: 100% }
+.members td { white-space: normal }
+.members td:nth-child(2) { min-width: 110px }
+.link { all: unset; cursor: pointer; font-weight: 700; text-decoration: underline; text-decoration-color: var(--line); text-underline-offset: 3px }
+#r-stats th, #r-stats td { padding: 7px 5px }
+
+/* 試合 */
+.live { border-top: 4px solid var(--team) }
+.scoreboard { display: flex; align-items: center; justify-content: space-between; gap: 12px; background: var(--clubbar); color: #fff; border-radius: var(--r); padding: 10px 14px }
+.clock { font-family: var(--f-num); font-weight: 800; font-size: 1.7rem; font-variant-numeric: tabular-nums; letter-spacing: .03em; display: flex; align-items: baseline; gap: 8px; min-height: 1.2em }
+.clock small { font-family: var(--f-body); font-size: .78rem; font-weight: 700; color: var(--gold) }
+.score { font-family: var(--f-num); font-weight: 800; font-size: 2.6rem; line-height: 1; letter-spacing: .06em; font-variant-numeric: tabular-nums }
+.ev-btns { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 8px }
+.ev-btns .btn { min-height: 42px }
+#ev-goal { background: var(--ok); border-color: var(--ok); color: #fff }
+.log { display: grid; gap: 4px; font-size: .86rem }
+.log div { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap }
+.log .min { font-family: var(--f-num); font-weight: 800; min-width: 34px; color: var(--muted) }
+.in { color: var(--ok); font-weight: 700 } .outc { color: var(--warn); font-weight: 700 }
+.ev-goal { color: var(--ok); font-weight: 900 } .ev-against { color: var(--warn); font-weight: 900 } .ev-card { font-weight: 700 }
+.picker { display: flex; flex-wrap: wrap; gap: 6px; padding: 10px; border: 2px solid var(--sel); border-radius: var(--r); background: color-mix(in srgb, var(--sel) 8%, var(--surface)) }
+.picker .lab { width: 100%; font-size: .82rem; font-weight: 900 }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: var(--r); overflow: hidden }
+.seg button { border: 0; background: var(--surface); padding: 5px 10px; font-size: .8rem; cursor: pointer; border-left: 1px solid var(--line); font-weight: 700 }
+.seg button:first-child { border-left: 0 }
+.seg button[aria-pressed="true"].yes { background: var(--ok); color: #fff }
+.seg button[aria-pressed="true"].maybe { background: var(--muted); color: #fff }
+.seg button[aria-pressed="true"].no { background: var(--warn); color: #fff }
+.att-row { display: flex; align-items: center; gap: 8px; padding: 5px 0; border-bottom: 1px solid var(--line) }
+.att-row .nm { flex: 1; min-width: 0 }
+.attbar { display: flex; height: 8px; border-radius: 4px; overflow: hidden; background: var(--line) }
+.attbar i { display: block }
+
+/* 大きい画面(試合中) */
+body.big .clubbar, body.big .tabbar, body.big .teamband, body.big #match-panel, body.big #table-panel, body.big #live-desc, body.big #pitch-block .bar, body.big .hint, body.big #z-out, body.big #t-msg { display: none !important }
+body.big { padding-bottom: 16px }
+body.big #view-team .grid { grid-template-columns: minmax(0, 1fr) }
+body.big #view-team .grid > .col:last-child { order: -1 }
+body.big .scoreboard { padding: 16px 18px }
+body.big .clock { font-size: 3.2rem }
+body.big .clock small { font-size: 1rem }
+body.big .score { font-size: 4.6rem }
+body.big .ev-btns { grid-template-columns: 1.4fr 1fr 1fr }
+body.big .ev-btns .btn { min-height: 64px; font-size: 1.15rem; white-space: nowrap; padding: 6px }
+body.big #clock-btns .btn { padding: 14px 20px; font-size: 1.1rem; flex: 1 }
+body.big .log { font-size: 1rem }
+@media (min-width: 860px) { body.big #view-team .grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) } body.big #view-team .grid > .col:last-child { order: 0 } }
+
+/* ホーム */
+.fixtures { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px }
+.fixture { display: grid; grid-template-columns: 74px 1fr; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); overflow: hidden }
+.fixture .side { background: var(--tc); color: #fff; display: grid; place-items: center; font-family: var(--f-num); font-style: italic; font-weight: 800; font-size: 3.6rem; line-height: 1 }
+.fixture .body { padding: 14px 16px; display: grid; gap: 8px; min-width: 0 }
+.fixture .when { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap }
+.fixture .date { font-family: var(--f-num); font-weight: 800; font-size: 2.2rem; line-height: 1 }
+.fixture .dow { font-weight: 900 }
+.fixture .left { margin-left: auto; font-weight: 900; color: var(--tc); font-size: .9rem }
+.fixture .vs { font-weight: 900; font-size: 1.15rem; overflow-wrap: anywhere }
+.fixture .vs small { font-family: var(--f-num); font-style: italic; font-weight: 800; color: var(--muted); margin-right: 6px; font-size: 1rem }
+.fixture .btn.primary { background: var(--tc); border-color: var(--tc) }
+.home-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px }
+.form-row { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--line) }
+.form-row:last-child { border-bottom: 0 }
+.form-row .sc { font-family: var(--f-num); font-weight: 800; font-size: 1.3rem; letter-spacing: .04em }
+.form-strip { display: flex; gap: 4px }
+.res { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 4px; font-weight: 900; font-size: .78rem; color: #fff; flex: none }
+.res.W { background: var(--ok) } .res.D { background: var(--muted) } .res.L { background: var(--warn) }
+.leader { display: grid; grid-template-columns: 28px 1fr auto; gap: 10px; align-items: center; padding: 7px 0; border-bottom: 1px solid var(--line) }
+.leader:last-child { border-bottom: 0 }
+.leader .rk { font-family: var(--f-num); font-weight: 800; font-size: 1.3rem; color: var(--muted); text-align: center }
+.leader .n { font-family: var(--f-num); font-weight: 800; font-size: 1.5rem; line-height: 1 }
+.leader:first-child .rk { color: var(--gold) }
+
+/* 記録 */
+.kpis { display: flex; flex-wrap: wrap; gap: 0; background: var(--clubbar); color: #fff; border-radius: var(--r); overflow: hidden }
+.kpis:empty { display: none }
+.kpis div { display: grid; padding: 12px 18px; border-right: 1px solid rgba(255,255,255,.12) }
+.kpis span { font-size: .74rem; opacity: .7; font-weight: 700 }
+.kpis b { font-family: var(--f-num); font-weight: 800; font-size: 1.7rem; line-height: 1.1 }
+.rec-list { display: grid; gap: 8px }
+.rec { border: 1px solid var(--line); border-radius: var(--r); padding: 10px 12px; display: grid; gap: 8px }
+.rec > button.head { all: unset; cursor: pointer; display: flex; gap: 10px; align-items: center; flex-wrap: wrap }
+.rec .sc { font-family: var(--f-num); font-weight: 800; font-size: 1.35rem; letter-spacing: .04em }
+.rec .detail { display: grid; gap: 6px; font-size: .86rem; border-top: 1px solid var(--line); padding-top: 8px }
+.opp-row { all: unset; cursor: pointer; display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; padding: 9px 0; border-bottom: 1px solid var(--line); width: 100%; box-sizing: border-box }
+.opp-row b { font-weight: 900 }
+.opp-row .rec3 { font-family: var(--f-num); font-weight: 800; font-size: 1.1rem }
+
+/* 紅白戦・作戦 */
+.teams2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px }
+.teams2 > div { border: 1px solid var(--line); border-top: 4px solid var(--c); border-radius: var(--r); padding: 10px }
+.teams2 b { color: var(--c); font-weight: 900 }
+.teams2 ol { margin: 6px 0 0; padding-left: 1.4em }
+.check-list { display: flex; flex-wrap: wrap; gap: 6px }
+.check-list label { display: inline-flex; gap: 5px; align-items: center; border: 1px solid var(--line); border-radius: var(--r); padding: 4px 10px 4px 7px; cursor: pointer; font-size: .85rem; font-weight: 700 }
+.check-list input { accent-color: var(--team) }
+.saved-list { display: grid; gap: 4px }
+.saved-list div { display: flex; gap: 6px; align-items: center; padding: 5px 0; border-bottom: 1px solid var(--line) }
+.saved-list .nm { flex: 1; min-width: 0; overflow-wrap: anywhere; font-weight: 700 }
+
+/* お知らせ */
+.banner { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--gold); border-radius: var(--r); padding: 10px 12px }
+
+/* 下のタブ */
+.tabbar { position: fixed; z-index: 20; left: 0; right: 0; bottom: 0; background: var(--clubbar); display: grid; grid-template-columns: repeat(5, 1fr); padding-bottom: env(safe-area-inset-bottom, 0px); border-top: 1px solid rgba(255,255,255,.08) }
+.tabbar .tab { all: unset; cursor: pointer; display: grid; justify-items: center; gap: 2px; padding: 9px 0 8px; color: rgba(255,255,255,.55); font-size: .68rem; font-weight: 700; position: relative; height: calc(var(--tabbar-h) - 17px) }
+.tabbar .tab svg { width: 24px; height: 24px; fill: currentColor }
+.tabbar .tab[aria-selected="true"] { color: #fff }
+.tabbar .tab[aria-selected="true"]::before { content: ""; position: absolute; top: 0; left: 30%; right: 30%; height: 3px; background: var(--gold); border-radius: 0 0 3px 3px }
+.tabbar .tab:focus-visible { outline: 2px solid var(--gold); outline-offset: -4px }
+
+/* 詳細のシート */
+.sheet { border: 0; padding: 0; margin: auto auto 0; width: min(600px, 100%); max-height: 90vh; border-radius: 14px 14px 0 0; background: var(--surface); color: var(--ink) }
+.sheet::backdrop { background: rgba(6, 13, 26, .55) }
+#sheet-body { padding: 0 0 calc(20px + env(safe-area-inset-bottom, 0px)); display: grid; gap: 14px }
+.sheet-head { display: flex; align-items: center; gap: 14px; padding: 16px; background: var(--tc, var(--team)); color: #fff; position: sticky; top: 0 }
+.sheet-head .big-no { font-family: var(--f-num); font-style: italic; font-weight: 800; font-size: 3.4rem; line-height: .9; min-width: 64px; text-align: center }
+.sheet-head h2 { font-weight: 900; font-size: 1.35rem }
+.sheet-head .x { margin-left: auto; background: rgba(255,255,255,.18); border: 0; color: #fff; width: 36px; height: 36px; border-radius: 50%; font-size: 1.2rem; cursor: pointer }
+.sheet-sec { padding: 0 16px; display: grid; gap: 8px }
+.statgrid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); border: 1px solid var(--line); border-radius: var(--r); overflow: hidden }
+.statgrid div { display: grid; padding: 8px 8px; min-width: 0; border-right: 1px solid var(--line) }
+.statgrid div:last-child { border-right: 0 }
+.statgrid span { font-size: .68rem; white-space: nowrap; color: var(--muted); font-weight: 700 }
+.statgrid b { font-family: var(--f-num); font-weight: 800; font-size: 1.5rem; line-height: 1.1 }
+.form2 { display: grid; grid-template-columns: auto 1fr; gap: 8px 10px; align-items: center }
+
+/* 戦術ボード */
+.tac-wrap { display: grid; grid-template-columns: minmax(0, 340px) minmax(0, 1fr); gap: 16px; align-items: start }
+@media (max-width: 860px) { .tac-wrap { grid-template-columns: minmax(0, 1fr) } .tac-side { order: 2 } }
+.tac-pitch { touch-action: none; display: grid; place-items: center }
+#tac-svg { width: 100%; max-height: calc(100dvh - 160px); aspect-ratio: 76 / 113; touch-action: none; user-select: none; -webkit-user-select: none; display: block; border-radius: var(--r) }
+#tac-svg .tok { cursor: grab }
+.tool[aria-pressed="true"] { background: var(--ink); color: var(--surface); border-color: var(--ink) }
+.swatch { width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--line); cursor: pointer; padding: 0 }
+.swatch[aria-pressed="true"] { outline: 3px solid var(--ink); outline-offset: 2px }
+
+@media (prefers-reduced-motion: no-preference) {
+  .sheet[open] { animation: up .22s ease-out }
+  @keyframes up { from { transform: translateY(40px); opacity: .4 } to { transform: none; opacity: 1 } }
+}

@@ -18,7 +18,7 @@ function membersHook() {
 function renderKh() {
   $("kh-copy").hidden = !khResult;
   if (!khResult) { $("kh-out").innerHTML = ""; return; }
-  const col = (lab, color, ids) => `<div class="panel" style="padding:10px;border-color:${color}"><b style="color:${color}">${lab} ${ids.length}人</b><ol>${ids.map((id) => { const m = mById(id); return m ? `<li>${esc(m.name)} <span class="sub">${esc(m.pos || "")}</span></li>` : ""; }).join("")}</ol></div>`;
+  const col = (lab, color, ids) => `<div style="--c:${color}"><b>${lab} ${ids.length}人</b><ol>${ids.map((id) => { const m = mById(id); return m ? `<li>${esc(m.name)} <span class="sub">${esc(m.pos || "")}</span></li>` : ""; }).join("")}</ol></div>`;
   $("kh-out").innerHTML = col("ビブス", "var(--b)", khResult[0]) + col("白", "var(--a)", khResult[1]);
 }
 /** ポジションの種類ごとに、少ない方のチームへ交互に入れる(同じ種類の中はランダム) */

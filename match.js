@@ -89,6 +89,8 @@ function teamHook(t) {
   const B = (id, lab, primary) => `<button class="btn small ${primary ? "primary" : ""}" data-clock="${id}">${lab}</button>`;
   $("clock-btns").innerHTML = c.st === "pre" ? B("1st", "▶ 前半キックオフ", true) : c.st === "1st" ? B("ht", "前半終了") : c.st === "ht" ? B("2nd", "▶ 後半キックオフ", true) : c.st === "2nd" ? B("ft", "試合終了") : '<span class="sub">試合終了。「記録に保存」で試合記録に残せます。</span>';
   const sc = scoreOf(t); $("score").textContent = `${sc.us} - ${sc.them}`;
+  const h2h = mt.opp ? Object.values(store.matches || {}).filter((r) => r.opp && r.opp === mt.opp) : [];
+  $("h2h-note").textContent = h2h.length ? `この相手と${h2h.length}戦 ${h2h.filter((r) => r.us > r.them).length}勝${h2h.filter((r) => r.us === r.them).length}分${h2h.filter((r) => r.us < r.them).length}敗` : "";
   $("min-note").textContent = c.st === "1st" || c.st === "2nd" ? `いま ${clockMin(t)}分(手入力すると、そちらが優先)` : "タイマーを使わないときは、ここに分を入れてから交代・得点を記録";
   renderPicker(t);
   // ログ(交代+得点+カード、時間順)
@@ -227,7 +229,7 @@ function renderRecords() {
   $("r-list").innerHTML = list.length ? list.map((r) => {
     const scorers = r.events.filter((e) => e.type === "goal").map((e) => (e.id ? nameIn(r, e.id) : "OG"));
     const open = openRec === r.id;
-    return `<div class="rec"><button class="head" data-rec="${r.id}"><span class="res ${resOf(r)}">${{ W: "勝", D: "分", L: "負" }[resOf(r)]}</span><b>${r.us} - ${r.them}</b><span>vs ${esc(r.opp || "(相手未入力)")}</span><span class="sub">${fmtDate(r.date)} ・ ${r.team}チーム</span>${scorers.length ? `<span class="sub" style="width:100%">⚽ ${esc(scorers.join("、"))}</span>` : ""}</button>${open ? recDetail(r) : ""}</div>`;
+    return `<div class="rec"><button class="head" data-rec="${r.id}"><span class="res ${resOf(r)}">${{ W: "勝", D: "分", L: "負" }[resOf(r)]}</span><span class="sc">${r.us} - ${r.them}</span><b>vs ${esc(r.opp || "(相手未入力)")}</b><span class="sub">${fmtDate(r.date)} ・ ${r.team}チーム</span>${scorers.length ? `<span class="sub" style="width:100%">⚽ ${esc(scorers.join("、"))}</span>` : ""}</button>${open ? recDetail(r) : ""}</div>`;
   }).join("") : '<div class="empty-state">まだ記録がありません。チーム画面で試合モードを使い、終わったら「記録に保存」。</div>';
   // 個人成績
   const st = {};
@@ -239,7 +241,7 @@ function renderRecords() {
   });
   const rows = Object.values(st).sort((a, b) => b.min - a.min || b.g - a.g);
   $("r-stats").innerHTML = rows.length ? `<thead><tr><th>名前</th><th>試合</th><th>先発</th><th>時間</th><th>得点</th><th>A</th><th>警告</th></tr></thead><tbody>` +
-    rows.map((s) => `<tr><td>${esc(s.name)}${team === "all" ? ` <span class="sub">${esc(s.team)}</span>` : ""}</td><td class="ps">${s.apps}</td><td class="ps">${s.starts}</td><td class="ps">${s.min}分</td><td class="ps">${s.g || ""}</td><td class="ps">${s.a || ""}</td><td class="ps">${s.y ? "🟨" + s.y : ""}${s.rd ? " 🟥" + s.rd : ""}</td></tr>`).join("") + "</tbody>"
+    rows.map((s) => `<tr><td>${mById(s.id) ? `<button class="link" data-player="${s.id}">${esc(s.name)}</button>` : esc(s.name)}${team === "all" ? ` <span class="sub">${esc(s.team)}</span>` : ""}</td><td class="ps">${s.apps}</td><td class="ps">${s.starts}</td><td class="ps">${s.min}分</td><td class="ps">${s.g || ""}</td><td class="ps">${s.a || ""}</td><td class="ps">${s.y ? "🟨" + s.y : ""}${s.rd ? " 🟥" + s.rd : ""}</td></tr>`).join("") + "</tbody>"
     : '<tr><td class="empty-state">記録に保存した試合がまだありません。</td></tr>';
 }
 function recDetail(r) {
@@ -264,15 +266,19 @@ $("r-list").addEventListener("click", (e) => {
 async function squadImage(t, key) {
   try { await Promise.all(["700 30px 'Zen Kaku Gothic New'", "700 30px 'Barlow Condensed'"].map((f) => document.fonts.load(f))); } catch (e) {}
   const mt = matchOf(t), form = F[t.formation], subs = t.subs.map((id) => mById(id)).filter(Boolean);
-  const W = 1080, pad = 48, pw = W - pad * 2, ph = Math.round(pw * 1.18), top = 190, rows = Math.ceil(subs.length / 2);
+  const W = 1080, pad = 48, pw = W - pad * 2, ph = Math.round(pw * 1.18), top = 220, rows = Math.ceil(subs.length / 2);
   const H = top + ph + 90 + Math.max(1, rows) * 52 + 70;
   const cv = document.createElement("canvas"); cv.width = W; cv.height = H; const g = cv.getContext("2d");
-  const col = key === "A" ? "#1d5fd1" : "#d0471f", JP = "'Zen Kaku Gothic New','Hiragino Sans',sans-serif", NUM = "'Barlow Condensed','Arial Narrow',sans-serif";
-  g.fillStyle = "#f3f5f1"; g.fillRect(0, 0, W, H);
-  g.fillStyle = col; g.fillRect(0, 0, W, 14);
-  g.fillStyle = "#18211b"; g.font = `700 54px ${JP}`; g.fillText(`${key}チーム メンバー表`, pad, 92);
-  g.fillStyle = "#5d6b61"; g.font = `500 32px ${JP}`;
-  g.fillText([mt.date ? fmtDate(mt.date) : "", mt.opp ? `vs ${mt.opp}` : "", t.formation].filter(Boolean).join("  ・  "), pad, 146);
+  const col = key === "A" ? "#1e4fd6" : "#c8102e", JP = "'Zen Kaku Gothic New','Hiragino Sans',sans-serif", NUM = "'Barlow Condensed','Arial Narrow',sans-serif";
+  g.fillStyle = "#eef1f4"; g.fillRect(0, 0, W, H);
+  // チームカラーの帯と大きな斜体の文字
+  g.fillStyle = col; g.fillRect(0, 0, W, top - 36);
+  g.save(); g.globalAlpha = 0.09; g.fillStyle = "#fff"; g.beginPath(); g.moveTo(W * 0.62, 0); g.lineTo(W * 0.70, 0); g.lineTo(W * 0.62, top - 36); g.lineTo(W * 0.54, top - 36); g.fill();
+  g.beginPath(); g.moveTo(W * 0.74, 0); g.lineTo(W * 0.78, 0); g.lineTo(W * 0.70, top - 36); g.lineTo(W * 0.66, top - 36); g.fill(); g.restore();
+  g.fillStyle = "#fff"; g.font = `italic 800 170px ${NUM}`; g.fillText(key, pad - 6, top - 52);
+  g.font = `900 52px ${JP}`; g.fillText(`${key}チーム メンバー表`, pad + 120, 86);
+  g.globalAlpha = 0.85; g.font = `700 30px ${JP}`;
+  g.fillText([mt.date ? fmtDate(mt.date) : "", mt.opp ? `vs ${mt.opp}` : "", t.formation].filter(Boolean).join("   "), pad + 122, 136); g.globalAlpha = 1;
   // ピッチ
   const rr = (x, y, w, h, r) => { g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); };
   g.save(); rr(pad, top, pw, ph, 22); g.clip();
@@ -285,30 +291,31 @@ async function squadImage(t, key) {
   g.strokeRect(X(22), Y(2), X(78) - X(22), Y(16) - Y(2)); g.strokeRect(X(22), Y(84), X(78) - X(22), Y(98) - Y(84));
   form.forEach(([ps, x, y], i) => {
     const m = t.lineup[i] && mById(t.lineup[i]); const cx = X(x), cy = Y(4 + y * 0.86);
-    g.beginPath(); g.arc(cx, cy, 38, 0, Math.PI * 2); g.fillStyle = ps === "GK" ? "#ffd23f" : m ? "#fff" : "rgba(255,255,255,.2)"; g.fill();
-    g.lineWidth = 6; g.strokeStyle = m ? col : "rgba(255,255,255,.8)"; g.stroke();
-    g.fillStyle = "#18211b"; g.font = `700 40px ${NUM}`; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(m ? String(m.no ?? "") : "", cx, cy + 2);
+    g.beginPath(); g.arc(cx, cy, 38, 0, Math.PI * 2); g.fillStyle = ps === "GK" ? "#f2c230" : m ? col : "rgba(255,255,255,.2)"; g.fill();
+    g.lineWidth = 5; g.strokeStyle = "#fff"; g.stroke();
+    g.fillStyle = ps === "GK" ? "#0f1d33" : "#fff"; g.font = `700 40px ${NUM}`; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(m ? String(m.no ?? "") : "", cx, cy + 2);
     g.textBaseline = "alphabetic"; g.font = `700 28px ${JP}`; g.lineWidth = 6; g.strokeStyle = "rgba(0,0,0,.55)"; g.fillStyle = "#fff";
     const nm = m ? m.name : "空き"; g.strokeText(nm, cx, cy + 74); g.fillText(nm, cx, cy + 74);
     g.font = `600 22px ${NUM}`; g.fillStyle = "rgba(255,255,255,.9)"; g.fillText(ps, cx, cy + 100);
   });
   g.textAlign = "left";
   // サブ
-  let y0 = top + ph + 70; g.fillStyle = "#18211b"; g.font = `700 34px ${JP}`; g.fillText(`サブ ${subs.length}人`, pad, y0);
+  let y0 = top + ph + 70; g.fillStyle = col; g.fillRect(pad, y0 - 30, 8, 36); g.fillStyle = "#0f1d33"; g.font = `900 34px ${JP}`; g.fillText(`サブ ${subs.length}人`, pad + 20, y0);
   g.font = `500 30px ${JP}`;
   if (!subs.length) { g.fillStyle = "#5d6b61"; g.fillText("なし", pad, y0 + 52); }
-  subs.forEach((m, i) => { const cx = pad + (i % 2) * (pw / 2), cy = y0 + 52 * (Math.floor(i / 2) + 1); g.fillStyle = col; g.font = `700 32px ${NUM}`; g.fillText(String(m.no ?? "-"), cx, cy); g.fillStyle = "#18211b"; g.font = `500 30px ${JP}`; g.fillText(`${m.name}${m.pos ? `(${m.pos})` : ""}`, cx + 56, cy); });
+  subs.forEach((m, i) => { const cx = pad + (i % 2) * (pw / 2), cy = y0 + 52 * (Math.floor(i / 2) + 1); g.fillStyle = col; g.font = `700 32px ${NUM}`; g.fillText(String(m.no ?? "-"), cx, cy); g.fillStyle = "#0f1d33"; g.font = `700 30px ${JP}`; g.fillText(`${m.name}${m.pos ? `(${m.pos})` : ""}`, cx + 56, cy); });
   return new Promise((res) => cv.toBlob(res, "image/png"));
 }
-$("share-img").addEventListener("click", async () => {
-  const t = normTeam(T(), view); const blob = await squadImage(t, view);
-  const mt = matchOf(t), name = `${view}チーム_${mt.date || new Date().toISOString().slice(0, 10)}.png`;
+$("share-img").addEventListener("click", () => shareSquad(view, $("pre-msg")));
+async function shareSquad(k, msgEl) {
+  const t = normTeam(teams[k] || blankTeam(), k); const blob = await squadImage(t, k);
+  const mt = matchOf(t), name = `${k}チーム_${mt.date || new Date().toISOString().slice(0, 10)}.png`;
   const file = new File([blob], name, { type: "image/png" });
   if (navigator.canShare && navigator.canShare({ files: [file] })) {
-    try { await navigator.share({ files: [file], title: `${view}チーム メンバー表` }); $("pre-msg").textContent = ""; return; } catch (e) { if (e && e.name === "AbortError") return; }
+    try { await navigator.share({ files: [file], title: `${k}チーム メンバー表` }); if (msgEl) msgEl.textContent = ""; return; } catch (e) { if (e && e.name === "AbortError") return; }
   }
   const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name; document.body.append(a); a.click(); a.remove();
-  $("pre-msg").textContent = "画像を保存した。LINEで送るときは、写真から選んでね。";
-});
+  if (msgEl) msgEl.textContent = "画像を保存した。LINEで送るときは、写真から選んでね。";
+}
 
 render();
