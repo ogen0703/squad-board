@@ -243,10 +243,14 @@ body.big .log { font-size: 1rem }
 .form2 { display: grid; grid-template-columns: auto 1fr; gap: 8px 10px; align-items: center }
 
 /* 戦術ボード */
-.tac-wrap { display: grid; grid-template-columns: minmax(0, 340px) minmax(0, 1fr); gap: 16px; align-items: start }
-@media (max-width: 860px) { .tac-wrap { grid-template-columns: minmax(0, 1fr) } .tac-side { order: 2 } }
-.tac-pitch { touch-action: none; display: grid; place-items: center }
-#tac-svg { width: 100%; max-height: calc(100dvh - 160px); aspect-ratio: 76 / 113; touch-action: none; user-select: none; -webkit-user-select: none; display: block; border-radius: var(--r) }
+.tac-wrap { display: grid; grid-template-columns: minmax(0, 340px) minmax(0, 1fr); grid-template-areas: "top board" "side board"; gap: 12px 16px; align-items: start }
+.tac-top { grid-area: top; display: grid; gap: 8px } .tac-pitch { grid-area: board } .tac-side { grid-area: side }
+@media (max-width: 860px) { .tac-wrap { grid-template-columns: minmax(0, 1fr); grid-template-areas: "top" "board" "side" } .tac-head { display: none } }
+/* ピッチの外側(左右の余白)ではスクロールできる。ボードは画面に収まる高さ(JSで計算) */
+.tac-pitch { display: grid; place-items: center; touch-action: pan-y }
+#tac-svg { width: 100%; max-height: var(--tac-h, calc(100dvh - 260px)); aspect-ratio: 76 / 113; user-select: none; -webkit-user-select: none; display: block; border-radius: var(--r); touch-action: none }
+#tac-svg.can-scroll { touch-action: pan-y }
+#tac-svg.can-scroll .tok { touch-action: none }
 #tac-svg .tok { cursor: grab }
 .tool[aria-pressed="true"] { background: var(--ink); color: var(--surface); border-color: var(--ink) }
 .swatch { width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--line); cursor: pointer; padding: 0 }

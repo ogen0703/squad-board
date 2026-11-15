@@ -138,41 +138,43 @@
 
   <!-- 戦術ボード -->
   <section id="view-T" hidden>
-    <div class="pagehead"><h1>戦術ボード</h1></div>
+    <div class="pagehead tac-head"><h1>戦術ボード</h1></div>
     <div class="tac-wrap">
+      <div class="tac-top">
+        <div class="bar" id="tac-tools" role="group" aria-label="道具">
+          <button class="btn small tool" data-tool="move" aria-pressed="true">動かす</button>
+          <button class="btn small tool" data-tool="pen" aria-pressed="false">ペン</button>
+          <button class="btn small tool" data-tool="arrow" aria-pressed="false">矢印</button>
+          <button class="btn small tool" data-tool="pass" aria-pressed="false">点線</button>
+          <button class="btn small tool" data-tool="erase" aria-pressed="false">消す</button>
+        </div>
+        <div class="bar" id="tac-colors" role="group" aria-label="線の色">
+          <button class="swatch" data-color="#ffd23f" aria-pressed="true" style="background:#ffd23f" aria-label="黄"></button>
+          <button class="swatch" data-color="#ffffff" aria-pressed="false" style="background:#ffffff" aria-label="白"></button>
+          <button class="swatch" data-color="#ff5a4f" aria-pressed="false" style="background:#ff5a4f" aria-label="赤"></button>
+          <button class="swatch" data-color="#6fb3ff" aria-pressed="false" style="background:#6fb3ff" aria-label="青"></button>
+          <span class="grow"></span>
+          <button class="btn small" id="tac-undo">ひとつ戻す</button>
+        </div>
+      </div>
+      <div class="tac-pitch"><svg id="tac-svg" viewBox="-4 -4 76 113" preserveAspectRatio="xMidYMid meet" role="img" aria-label="戦術ボード"></svg></div>
       <div class="block tac-side">
+        <div class="hint" id="tac-hint"></div>
         <div class="bar">
           <label class="sub" for="tac-team">自分たち</label>
           <select id="tac-team"><option value="A">Aチーム</option><option value="B">Bチーム</option></select>
           <label class="sub" for="tac-opp">相手</label>
           <select id="tac-opp"></select>
         </div>
-        <div class="bar" id="tac-tools" role="group" aria-label="道具">
-          <button class="btn tool" data-tool="move" aria-pressed="true">動かす</button>
-          <button class="btn tool" data-tool="pen" aria-pressed="false">ペン</button>
-          <button class="btn tool" data-tool="arrow" aria-pressed="false">矢印(人)</button>
-          <button class="btn tool" data-tool="pass" aria-pressed="false">点線(ボール)</button>
-          <button class="btn tool" data-tool="erase" aria-pressed="false">消しゴム</button>
-        </div>
-        <div class="bar" id="tac-colors" role="group" aria-label="線の色">
-          <span class="sub">線の色</span>
-          <button class="swatch" data-color="#ffd23f" aria-pressed="true" style="background:#ffd23f" aria-label="黄"></button>
-          <button class="swatch" data-color="#ffffff" aria-pressed="false" style="background:#ffffff" aria-label="白"></button>
-          <button class="swatch" data-color="#ff5a4f" aria-pressed="false" style="background:#ff5a4f" aria-label="赤"></button>
-          <button class="swatch" data-color="#6fb3ff" aria-pressed="false" style="background:#6fb3ff" aria-label="青"></button>
-        </div>
         <div class="bar">
-          <button class="btn small" id="tac-undo">ひとつ戻す</button>
           <button class="btn small" id="tac-clear">線を全部消す</button>
           <button class="btn small" id="tac-reset">選手を元の配置に</button>
         </div>
-        <div class="hint" id="tac-hint"></div>
         <div class="sub">自分たちはスタメンとフォーメーションで並びます(下から上に攻める向き)。スタメンを変えたら「選手を元の配置に」で反映。</div>
         <h2 class="sec-h">作戦の保存</h2>
         <div class="bar"><input type="text" id="tac-name" placeholder="例)CKのサイン1" style="flex:1;min-width:120px"><button class="btn small primary" id="tac-save">今のボードを保存</button></div>
         <div class="saved-list" id="tac-saved"></div>
       </div>
-      <div class="tac-pitch"><svg id="tac-svg" viewBox="-4 -4 76 113" preserveAspectRatio="xMidYMid meet" role="img" aria-label="戦術ボード"></svg></div>
     </div>
   </section>
 

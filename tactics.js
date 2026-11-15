@@ -63,7 +63,9 @@
     c.pos.forEach((p, i) => drawToken(tg, p, i));
     const saved = st.saved || [];
     $("tac-saved").innerHTML = saved.length ? saved.map((x, i) => `<div><span class="nm">${esc(x.name)} <span class="sub">${esc(x.team)}チーム ・ ${x.lines.length}本の線</span></span><button class="btn small" data-tload="${i}">呼び出す</button><span class="confirm"><button class="btn small" data-tdel="${i}">削除</button></span></div>`).join("") : '<span class="sub">まだありません。セットプレーや約束事を名前をつけて残せます。</span>';
-    $("tac-hint").textContent = tool === "move" ? "選手やボールを指でドラッグして動かせます" : tool === "erase" ? "消したい線をタップ" : "ピッチの上をなぞって線を引きます(選手の上からでも引けます)";
+    svg.classList.toggle("can-scroll", tool === "move");
+    fitBoard();
+    $("tac-hint").textContent = tool === "move" ? "選手やボールを指でドラッグ。芝の上をなぞると画面をスクロールできます" : tool === "erase" ? "消したい線をタップ" : "ピッチの上をなぞって線を引きます(選手の上からでも引けます)";
   }
   function drawLine(g, l, i) {
     const common = { fill: "none", stroke: l.c, "stroke-width": l.t === "pass" ? ".55" : ".7", "stroke-linecap": "round", "stroke-linejoin": "round", "data-line": i };
@@ -139,7 +141,9 @@
   function init() {
     const svg = $("tac-svg"); if (!svg || svg.dataset.ready) return; svg.dataset.ready = "1";
     $("tac-opp").innerHTML = Object.keys(F).map(k => `<option value="${esc(k)}">${esc(k)}</option>`).join("");
-    svg.addEventListener("pointerdown", onDown); svg.addEventListener("pointermove", onMove);
+    svg.addEventListener("pointerdown", onDown);
+    // 選手・ボールをつかんだときと、線を引くときは画面をスクロールさせない(芝の上を「動かす」でなぞるとスクロール)
+    svg.addEventListener("touchstart", (e) => { if (tool !== "move" || e.target.closest("[data-tok]")) e.preventDefault(); }, { passive: false }); svg.addEventListener("pointermove", onMove);
     svg.addEventListener("pointerup", onUp); svg.addEventListener("pointercancel", onUp);
     $("tac-tools").addEventListener("click", (e) => { const b = e.target.closest("[data-tool]"); if (b) { tool = b.dataset.tool; render(); } });
     $("tac-colors").addEventListener("click", (e) => { const b = e.target.closest("[data-color]"); if (b) { color = b.dataset.color; if (tool === "move" || tool === "erase") tool = "arrow"; render(); } });
@@ -162,5 +166,14 @@
     });
     $("tac-reset").addEventListener("click", () => { const c = ensure(); snapshot(c); c.pos = defaultPos(); saveT(); render(); });
   }
+  /** ボードを、上の道具と下のタブのあいだにぴったり収める */
+  function fitBoard() {
+    const svg = $("tac-svg"); if (!svg || $("view-T").hidden) return;
+    const tab = document.querySelector(".tabbar"); const bottom = tab ? tab.getBoundingClientRect().height : 0;
+    const topY = svg.getBoundingClientRect().top + window.scrollY;
+    const h = Math.max(320, window.innerHeight - topY - bottom - 12);
+    svg.style.setProperty("--tac-h", h + "px"); svg.style.maxHeight = h + "px";
+  }
+  window.addEventListener("resize", () => fitBoard());
   window.tacticsRender = () => { init(); render(); };
 })();
