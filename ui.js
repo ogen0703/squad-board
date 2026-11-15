@@ -110,9 +110,9 @@ function renderOpps() {
 function openOpp(name) {
   const rs = allRecs().filter((r) => r.opp === name), w = rs.filter((r) => r.us > r.them).length, d = rs.filter((r) => r.us === r.them).length;
   const memo = ((store.opponents || {})[name] || {}).memo || "";
-  openSheet(`<div class="sheet-head" style="background:var(--clubbar)"><span class="big-no" style="font-size:2rem">vs</span><div><h2>${esc(name)}</h2><span class="sub" style="color:#fff;opacity:.85">${rs.length}試合 ${w}勝${d}分${rs.length - w - d}敗</span></div><button class="x" data-close aria-label="閉じる">×</button></div>
+  openSheet(`<div class="sheet-head" style="background:var(--dark)"><span class="big-no" style="font-size:2rem">vs</span><div><h2>${esc(name)}</h2><span class="sub" style="color:#fff;opacity:.85">${rs.length}試合 ${w}勝${d}分${rs.length - w - d}敗</span></div><button class="x" data-close aria-label="閉じる">×</button></div>
     <div class="sheet-sec"><h3 class="sec-h">対戦の記録</h3>${rs.map((r) => `<div class="form-row"><span class="res ${resOf(r)}">${resLab[resOf(r)]}</span><span><b>${fmtDate(r.date)}</b> <span class="sub">${r.team}チーム</span><br><span class="sub">${r.events.filter((e) => e.type === "goal").map((e) => (e.id ? nameIn(r, e.id) : "OG")).join("、") || "得点なし"}</span></span><span class="sc">${r.us} - ${r.them}</span></div>`).join("")}</div>
-    <div class="sheet-sec"><h3 class="sec-h">相手のメモ</h3><textarea id="opp-memo" data-opp-name="${esc(name)}" placeholder="例)10番が速い、セットプレーが得意">${esc(memo)}</textarea><div class="status" id="opp-msg"></div></div>`, "var(--clubbar)");
+    <div class="sheet-sec"><h3 class="sec-h">相手のメモ</h3><textarea id="opp-memo" data-opp-name="${esc(name)}" placeholder="例)10番が速い、セットプレーが得意">${esc(memo)}</textarea><div class="status" id="opp-msg"></div></div>`, "var(--dark)");
 }
 $("r-opps").addEventListener("click", (e) => { const b = e.target.closest("[data-opp]"); if (b) openOpp(b.dataset.opp); });
 $("sheet-body").addEventListener("change", (e) => {

@@ -84,8 +84,8 @@
       return;
     }
     const our = p.side === "our"; const m = our && p.id ? mById(p.id) : null;
-    const fill = our ? (teamKey() === "A" ? "#1d5fd1" : "#d0471f") : "#222831";
-    svgEl("circle", { r: R, fill: p.ps === "GK" ? (our ? "#ffd23f" : "#9be15d") : fill, stroke: "#fff", "stroke-width": ".35" }, tg);
+    const fill = our ? (teamKey() === "A" ? "#c8102e" : "#00a398") : "#222831";
+    svgEl("circle", { r: R, fill: p.ps === "GK" ? (our ? "#f6eb61" : "#9be15d") : fill, stroke: "#fff", "stroke-width": ".35" }, tg);
     const num = our ? (m && m.no != null ? m.no : "") : p.n;
     const tx = svgEl("text", { y: ".8", "text-anchor": "middle", "font-size": "2.2", "font-weight": "700", fill: p.ps === "GK" ? "#111" : "#fff", "font-family": "Barlow Condensed, Arial Narrow, sans-serif" }, tg); tx.textContent = num;
     if (our) {

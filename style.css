@@ -1,21 +1,21 @@
-/* スカッドボード v3:クラブ公式サイト風。紺のクラブバー、チームカラーの帯、縦長の太い数字 */
+/* スカッドボード v3.1:リバプール風。深い赤のクラブバー、炭色の時計とタブ、淡い金の差し色 */
 :root {
-  --bg: #eef1f4; --surface: #ffffff; --ink: #0f1d33; --muted: #5a6678; --line: #d5dbe3; --soft: #f5f7fa;
-  --clubbar: #0f1d33; --clubbar-ink: #ffffff; --gold: #f2c230;
-  --a: #1e4fd6; --b: #c8102e; --team: var(--a);
+  --bg: #f3f1f1; --surface: #ffffff; --ink: #1d1d1b; --muted: #6b6464; --line: #e0dada; --soft: #f8f6f6;
+  --clubbar: #c8102e; --clubbar-2: #9e0b23; --dark: #1d1d1b; --clubbar-ink: #ffffff; --gold: #f6eb61;
+  --a: #c8102e; --b: #00a398; --team: var(--a);
   --turf: #1f6b3b; --turf-2: #1b6035; --chalk: rgba(255,255,255,.72);
-  --ok: #13804a; --warn: #b4471a; --sel: #f2c230;
+  --ok: #13804a; --warn: #d9822b; --sel: #f6eb61;
   --f-body: "Zen Kaku Gothic New", "Hiragino Sans", "Yu Gothic", system-ui, sans-serif;
   --f-num: "Barlow Condensed", "Arial Narrow", system-ui, sans-serif;
   --r: 6px; --tabbar-h: 62px;
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
-  --bg: #0a1322; --surface: #121e35; --ink: #e8edf5; --muted: #93a0b4; --line: #23314c; --soft: #0f1a2e;
-  --clubbar: #060d1a; --a: #5b86ff; --b: #ff5a6e; --turf: #1a5a32; --turf-2: #17502c; --ok: #4cc583; --warn: #ff8a5c; color-scheme: dark } }
+  --bg: #121010; --surface: #1e1a1a; --ink: #f2eeee; --muted: #a59d9d; --line: #352d2d; --soft: #181414;
+  --clubbar: #a00d24; --clubbar-2: #7a0a1c; --dark: #0c0b0b; --a: #e8304b; --b: #19c2b5; --turf: #1a5a32; --turf-2: #17502c; --ok: #4cc583; --warn: #f0a050; color-scheme: dark } }
 :root[data-theme="dark"] {
-  --bg: #0a1322; --surface: #121e35; --ink: #e8edf5; --muted: #93a0b4; --line: #23314c; --soft: #0f1a2e;
-  --clubbar: #060d1a; --a: #5b86ff; --b: #ff5a6e; --turf: #1a5a32; --turf-2: #17502c; --ok: #4cc583; --warn: #ff8a5c; color-scheme: dark }
+  --bg: #121010; --surface: #1e1a1a; --ink: #f2eeee; --muted: #a59d9d; --line: #352d2d; --soft: #181414;
+  --clubbar: #a00d24; --clubbar-2: #7a0a1c; --dark: #0c0b0b; --a: #e8304b; --b: #19c2b5; --turf: #1a5a32; --turf-2: #17502c; --ok: #4cc583; --warn: #f0a050; color-scheme: dark }
 :root.team-B { --team: var(--b) }
 
 * { box-sizing: border-box }
@@ -30,7 +30,7 @@ h1, h2 { margin: 0 }
 [hidden] { display: none !important }
 
 /* クラブバー */
-.clubbar { background: var(--clubbar); color: var(--clubbar-ink); padding-top: env(safe-area-inset-top, 0px) }
+.clubbar { background: linear-gradient(180deg, var(--clubbar), var(--clubbar-2)); border-bottom: 3px solid var(--gold); color: var(--clubbar-ink); padding-top: env(safe-area-inset-top, 0px) }
 .clubbar-in { max-width: 1120px; margin: 0 auto; padding: 10px max(16px, env(safe-area-inset-left, 0px)); display: flex; align-items: center; gap: 10px }
 .crest { width: 26px; color: var(--gold); display: grid }
 .club-txt { display: grid; line-height: 1.25 }
@@ -89,7 +89,7 @@ textarea { width: 100%; min-height: 110px; border: 1px solid var(--line); border
 .slot { position: absolute; transform: translate(-50%, -50%); width: 22%; display: grid; justify-items: center; gap: 1px; background: none; border: 0; padding: 0; cursor: pointer; color: #fff; touch-action: none }
 .shirt { width: 42px; height: 42px; border-radius: 50%; display: grid; place-items: center; font-family: var(--f-num); font-weight: 800; font-size: 1.3rem; background: var(--team); color: #fff; border: 2px solid #fff; box-shadow: 0 2px 0 rgba(0,0,0,.25); position: relative }
 .slot.empty .shirt { background: rgba(255,255,255,.14); color: #fff; border: 2px dashed rgba(255,255,255,.75); box-shadow: none }
-.slot.gk .shirt { background: var(--gold); color: #0f1d33 }
+.slot.gk .shirt { background: var(--gold); color: #1d1d1b }
 .slot .nm { font-size: .78rem; font-weight: 900; line-height: 1.2; text-shadow: 0 1px 2px rgba(0,0,0,.75); max-width: 100%; overflow-wrap: anywhere; text-align: center }
 .slot .ps { font-family: var(--f-num); font-weight: 700; font-size: .7rem; letter-spacing: .08em; opacity: .85; text-shadow: 0 1px 2px rgba(0,0,0,.6) }
 .slot.selected .shirt, .chip.selected { outline: 3px solid var(--sel); outline-offset: 2px }
@@ -123,7 +123,7 @@ tr.sec td { background: var(--soft); font-weight: 900; font-size: .8rem; border-
 
 /* 試合 */
 .live { border-top: 4px solid var(--team) }
-.scoreboard { display: flex; align-items: center; justify-content: space-between; gap: 12px; background: var(--clubbar); color: #fff; border-radius: var(--r); padding: 10px 14px }
+.scoreboard { display: flex; align-items: center; justify-content: space-between; gap: 12px; background: var(--dark); color: #fff; border-radius: var(--r); padding: 10px 14px }
 .clock { font-family: var(--f-num); font-weight: 800; font-size: 1.7rem; font-variant-numeric: tabular-nums; letter-spacing: .03em; display: flex; align-items: baseline; gap: 8px; min-height: 1.2em }
 .clock small { font-family: var(--f-body); font-size: .78rem; font-weight: 700; color: var(--gold) }
 .score { font-family: var(--f-num); font-weight: 800; font-size: 2.6rem; line-height: 1; letter-spacing: .06em; font-variant-numeric: tabular-nums }
@@ -186,10 +186,10 @@ body.big .log { font-size: 1rem }
 .leader:last-child { border-bottom: 0 }
 .leader .rk { font-family: var(--f-num); font-weight: 800; font-size: 1.3rem; color: var(--muted); text-align: center }
 .leader .n { font-family: var(--f-num); font-weight: 800; font-size: 1.5rem; line-height: 1 }
-.leader:first-child .rk { color: var(--gold) }
+.leader:first-child .rk { color: var(--clubbar) }
 
 /* 記録 */
-.kpis { display: flex; flex-wrap: wrap; gap: 0; background: var(--clubbar); color: #fff; border-radius: var(--r); overflow: hidden }
+.kpis { display: flex; flex-wrap: wrap; gap: 0; background: var(--dark); color: #fff; border-radius: var(--r); overflow: hidden }
 .kpis:empty { display: none }
 .kpis div { display: grid; padding: 12px 18px; border-right: 1px solid rgba(255,255,255,.12) }
 .kpis span { font-size: .74rem; opacity: .7; font-weight: 700 }
@@ -219,7 +219,7 @@ body.big .log { font-size: 1rem }
 .banner { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--gold); border-radius: var(--r); padding: 10px 12px }
 
 /* 下のタブ */
-.tabbar { position: fixed; z-index: 20; left: 0; right: 0; bottom: 0; background: var(--clubbar); display: grid; grid-template-columns: repeat(5, 1fr); padding-bottom: env(safe-area-inset-bottom, 0px); border-top: 1px solid rgba(255,255,255,.08) }
+.tabbar { position: fixed; z-index: 20; left: 0; right: 0; bottom: 0; background: var(--dark); display: grid; grid-template-columns: repeat(5, 1fr); padding-bottom: env(safe-area-inset-bottom, 0px); border-top: 1px solid rgba(255,255,255,.08) }
 .tabbar .tab { all: unset; cursor: pointer; display: grid; justify-items: center; gap: 2px; padding: 9px 0 8px; color: rgba(255,255,255,.55); font-size: .68rem; font-weight: 700; position: relative; height: calc(var(--tabbar-h) - 17px) }
 .tabbar .tab svg { width: 24px; height: 24px; fill: currentColor }
 .tabbar .tab[aria-selected="true"] { color: #fff }

@@ -1,4 +1,4 @@
-const CACHE = "squad-board-v9";
+const CACHE = "squad-board-v10";
 const CORE = ["./", "./index.html", "./manifest.webmanifest", "./icons/icon-192.png", "./icons/icon-512.png", "./icons/apple-touch-icon.png", "./style.css", "./app.js", "./tactics.js", "./match.js", "./club.js", "./ui.js"];
 self.addEventListener("install", (e) => { e.waitUntil(caches.open(CACHE).then((c) => c.addAll(CORE)).then(() => self.skipWaiting())); });
 self.addEventListener("activate", (e) => {

@@ -269,10 +269,10 @@ async function squadImage(t, key) {
   const W = 1080, pad = 48, pw = W - pad * 2, ph = Math.round(pw * 1.18), top = 220, rows = Math.ceil(subs.length / 2);
   const H = top + ph + 90 + Math.max(1, rows) * 52 + 70;
   const cv = document.createElement("canvas"); cv.width = W; cv.height = H; const g = cv.getContext("2d");
-  const col = key === "A" ? "#1e4fd6" : "#c8102e", JP = "'Zen Kaku Gothic New','Hiragino Sans',sans-serif", NUM = "'Barlow Condensed','Arial Narrow',sans-serif";
-  g.fillStyle = "#eef1f4"; g.fillRect(0, 0, W, H);
+  const col = key === "A" ? "#c8102e" : "#00a398", JP = "'Zen Kaku Gothic New','Hiragino Sans',sans-serif", NUM = "'Barlow Condensed','Arial Narrow',sans-serif";
+  g.fillStyle = "#f3f1f1"; g.fillRect(0, 0, W, H);
   // チームカラーの帯と大きな斜体の文字
-  g.fillStyle = col; g.fillRect(0, 0, W, top - 36);
+  g.fillStyle = col; g.fillRect(0, 0, W, top - 36); g.fillStyle = "#f6eb61"; g.fillRect(0, top - 36, W, 6); g.fillStyle = col;
   g.save(); g.globalAlpha = 0.09; g.fillStyle = "#fff"; g.beginPath(); g.moveTo(W * 0.62, 0); g.lineTo(W * 0.70, 0); g.lineTo(W * 0.62, top - 36); g.lineTo(W * 0.54, top - 36); g.fill();
   g.beginPath(); g.moveTo(W * 0.74, 0); g.lineTo(W * 0.78, 0); g.lineTo(W * 0.70, top - 36); g.lineTo(W * 0.66, top - 36); g.fill(); g.restore();
   g.fillStyle = "#fff"; g.font = `italic 800 170px ${NUM}`; g.fillText(key, pad - 6, top - 52);
@@ -291,19 +291,19 @@ async function squadImage(t, key) {
   g.strokeRect(X(22), Y(2), X(78) - X(22), Y(16) - Y(2)); g.strokeRect(X(22), Y(84), X(78) - X(22), Y(98) - Y(84));
   form.forEach(([ps, x, y], i) => {
     const m = t.lineup[i] && mById(t.lineup[i]); const cx = X(x), cy = Y(4 + y * 0.86);
-    g.beginPath(); g.arc(cx, cy, 38, 0, Math.PI * 2); g.fillStyle = ps === "GK" ? "#f2c230" : m ? col : "rgba(255,255,255,.2)"; g.fill();
+    g.beginPath(); g.arc(cx, cy, 38, 0, Math.PI * 2); g.fillStyle = ps === "GK" ? "#f6eb61" : m ? col : "rgba(255,255,255,.2)"; g.fill();
     g.lineWidth = 5; g.strokeStyle = "#fff"; g.stroke();
-    g.fillStyle = ps === "GK" ? "#0f1d33" : "#fff"; g.font = `700 40px ${NUM}`; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(m ? String(m.no ?? "") : "", cx, cy + 2);
+    g.fillStyle = ps === "GK" ? "#1d1d1b" : "#fff"; g.font = `700 40px ${NUM}`; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(m ? String(m.no ?? "") : "", cx, cy + 2);
     g.textBaseline = "alphabetic"; g.font = `700 28px ${JP}`; g.lineWidth = 6; g.strokeStyle = "rgba(0,0,0,.55)"; g.fillStyle = "#fff";
     const nm = m ? m.name : "空き"; g.strokeText(nm, cx, cy + 74); g.fillText(nm, cx, cy + 74);
     g.font = `600 22px ${NUM}`; g.fillStyle = "rgba(255,255,255,.9)"; g.fillText(ps, cx, cy + 100);
   });
   g.textAlign = "left";
   // サブ
-  let y0 = top + ph + 70; g.fillStyle = col; g.fillRect(pad, y0 - 30, 8, 36); g.fillStyle = "#0f1d33"; g.font = `900 34px ${JP}`; g.fillText(`サブ ${subs.length}人`, pad + 20, y0);
+  let y0 = top + ph + 70; g.fillStyle = col; g.fillRect(pad, y0 - 30, 8, 36); g.fillStyle = "#1d1d1b"; g.font = `900 34px ${JP}`; g.fillText(`サブ ${subs.length}人`, pad + 20, y0);
   g.font = `500 30px ${JP}`;
   if (!subs.length) { g.fillStyle = "#5d6b61"; g.fillText("なし", pad, y0 + 52); }
-  subs.forEach((m, i) => { const cx = pad + (i % 2) * (pw / 2), cy = y0 + 52 * (Math.floor(i / 2) + 1); g.fillStyle = col; g.font = `700 32px ${NUM}`; g.fillText(String(m.no ?? "-"), cx, cy); g.fillStyle = "#0f1d33"; g.font = `700 30px ${JP}`; g.fillText(`${m.name}${m.pos ? `(${m.pos})` : ""}`, cx + 56, cy); });
+  subs.forEach((m, i) => { const cx = pad + (i % 2) * (pw / 2), cy = y0 + 52 * (Math.floor(i / 2) + 1); g.fillStyle = col; g.font = `700 32px ${NUM}`; g.fillText(String(m.no ?? "-"), cx, cy); g.fillStyle = "#1d1d1b"; g.font = `700 30px ${JP}`; g.fillText(`${m.name}${m.pos ? `(${m.pos})` : ""}`, cx + 56, cy); });
   return new Promise((res) => cv.toBlob(res, "image/png"));
 }
 $("share-img").addEventListener("click", () => shareSquad(view, $("pre-msg")));
