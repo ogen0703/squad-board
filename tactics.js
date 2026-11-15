@@ -61,6 +61,8 @@
     c.lines.forEach((l, i) => drawLine(lg, l, i));
     const tg = svgEl("g", {}, svg);
     c.pos.forEach((p, i) => drawToken(tg, p, i));
+    const saved = st.saved || [];
+    $("tac-saved").innerHTML = saved.length ? saved.map((x, i) => `<div><span class="nm">${esc(x.name)} <span class="sub">${esc(x.team)}チーム ・ ${x.lines.length}本の線</span></span><button class="btn small" data-tload="${i}">呼び出す</button><span class="confirm"><button class="btn small" data-tdel="${i}">削除</button></span></div>`).join("") : '<span class="sub">まだありません。セットプレーや約束事を名前をつけて残せます。</span>';
     $("tac-hint").textContent = tool === "move" ? "選手やボールを指でドラッグして動かせます" : tool === "erase" ? "消したい線をタップ" : "ピッチの上をなぞって線を引きます(選手の上からでも引けます)";
   }
   function drawLine(g, l, i) {
@@ -145,6 +147,19 @@
     $("tac-opp").addEventListener("change", () => { const c = ensure(); snapshot(c); c.oppForm = $("tac-opp").value; const np = defaultPos(); c.pos = c.pos.filter(p => p.side !== "opp").concat(np.filter(p => p.side === "opp")); saveT(); render(); });
     $("tac-undo").addEventListener("click", () => { const c = ensure(); const h = c.hist.pop(); if (!h) return; Object.assign(c, JSON.parse(h)); saveT(); render(); });
     $("tac-clear").addEventListener("click", () => { const c = ensure(); if (!c.lines.length) return; snapshot(c); c.lines = []; saveT(); render(); });
+    $("tac-save").addEventListener("click", () => {
+      const c = ensure(); const name = $("tac-name").value.trim() || `作戦${(st.saved || []).length + 1}`;
+      st.saved = st.saved || []; const rec = { name, team: teamKey(), oppForm: c.oppForm, pos: JSON.parse(JSON.stringify(c.pos)), lines: JSON.parse(JSON.stringify(c.lines)), at: new Date().toISOString() };
+      const i = st.saved.findIndex((x) => x.name === name); if (i >= 0) st.saved[i] = rec; else st.saved.push(rec);
+      $("tac-name").value = ""; saveT(); render(); $("tac-hint").textContent = `「${name}」を保存した`;
+    });
+    $("tac-saved").addEventListener("click", (e) => {
+      const l = e.target.closest("[data-tload]"), d = e.target.closest("[data-tdel]"), y = e.target.closest("[data-tyes]"), n = e.target.closest("[data-tno]");
+      if (l) { const x = st.saved[+l.dataset.tload]; if (!x) return; st.team = x.team; const c = ensure(); snapshot(c); c.oppForm = x.oppForm; c.pos = JSON.parse(JSON.stringify(x.pos)); c.lines = JSON.parse(JSON.stringify(x.lines)); saveT(); render(); $("tac-hint").textContent = `「${x.name}」を呼び出した`; }
+      else if (d) d.parentElement.innerHTML = `<button class="btn small primary" data-tyes="${d.dataset.tdel}">消す</button><button class="btn small" data-tno>×</button>`;
+      else if (y) { st.saved.splice(+y.dataset.tyes, 1); saveT(); render(); }
+      else if (n) render();
+    });
     $("tac-reset").addEventListener("click", () => { const c = ensure(); snapshot(c); c.pos = defaultPos(); saveT(); render(); });
   }
   window.tacticsRender = () => { init(); render(); };

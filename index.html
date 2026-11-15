@@ -94,6 +94,8 @@ tr.sec td { background: var(--accent-soft); font-weight: 700; font-size: .82rem;
 .empty-state { text-align: center; color: var(--muted); padding: 18px 8px }
 .members td input, .members td select { width: 100% }
 .members td { white-space: normal }
+.members td:nth-child(2) { min-width: 110px }
+#r-stats th, #r-stats td { padding: 6px 5px }
 textarea { width: 100%; min-height: 110px; border: 1px solid var(--line); border-radius: 8px; padding: 8px; background: var(--surface); color: var(--ink); font: inherit }
 .status { font-size: .82rem; color: var(--muted) }
 .switch { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; cursor: pointer }
@@ -110,6 +112,40 @@ textarea { width: 100%; min-height: 110px; border: 1px solid var(--line); border
 .tool[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink) }
 .swatch { width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--line); cursor: pointer; padding: 0 }
 .swatch[aria-pressed="true"] { outline: 3px solid var(--accent); outline-offset: 2px }
+/* 試合・記録(v2) */
+.clock { font-family: var(--f-num); font-weight: 700; font-size: 1.6rem; letter-spacing: .04em; font-variant-numeric: tabular-nums }
+.clock small { font-family: var(--f-body); font-size: .8rem; color: var(--muted); margin-right: 6px; font-weight: 500 }
+.score { font-family: var(--f-num); font-weight: 700; font-size: 2rem; line-height: 1; letter-spacing: .04em; min-width: 92px; text-align: center }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden }
+.seg button { border: 0; background: var(--surface); padding: 4px 9px; font-size: .8rem; cursor: pointer; border-left: 1px solid var(--line) }
+.seg button:first-child { border-left: 0 }
+.seg button[aria-pressed="true"].yes { background: var(--ok); color: #fff }
+.seg button[aria-pressed="true"].maybe { background: var(--muted); color: #fff }
+.seg button[aria-pressed="true"].no { background: var(--warn); color: #fff }
+.att-row { display: flex; align-items: center; gap: 8px; padding: 4px 0; border-bottom: 1px solid var(--line) }
+.att-row .nm { flex: 1; min-width: 0 }
+.badge { display: inline-block; font-size: .68rem; padding: 0 6px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); font-weight: 700; margin-left: 2px }
+.badge.warn { background: color-mix(in srgb, var(--warn) 15%, transparent); color: var(--warn) }
+.picker { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px; border: 1px dashed var(--sel); border-radius: 10px }
+.picker .lab { width: 100%; font-size: .8rem; font-weight: 700 }
+.ev-goal { color: var(--ok); font-weight: 700 } .ev-against { color: var(--warn); font-weight: 700 } .ev-card { font-weight: 700 }
+.res { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 6px; font-weight: 700; font-size: .78rem; color: #fff }
+.res.W { background: var(--ok) } .res.D { background: var(--muted) } .res.L { background: var(--warn) }
+.rec { border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; display: grid; gap: 6px }
+.rec > button.head { all: unset; cursor: pointer; display: flex; gap: 8px; align-items: center; flex-wrap: wrap }
+.rec .detail { display: grid; gap: 6px; font-size: .85rem }
+.kpis { display: flex; flex-wrap: wrap; gap: 24px }
+.kpis div { display: grid } .kpis b { font-family: var(--f-num); font-size: 1.5rem; line-height: 1.1 }
+.teams2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px }
+.teams2 ol { margin: 0; padding-left: 1.4em }
+.banner[hidden] { display: none }
+.banner { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; background: color-mix(in srgb, var(--sel) 22%, var(--surface)); border: 1px solid var(--sel); border-radius: 12px; padding: 10px 12px }
+.check-list { display: flex; flex-wrap: wrap; gap: 6px }
+.check-list label { display: inline-flex; gap: 4px; align-items: center; border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px 3px 6px; cursor: pointer; font-size: .85rem }
+.saved-list { display: grid; gap: 4px }
+.saved-list div { display: flex; gap: 6px; align-items: center }
+.saved-list .nm { flex: 1; min-width: 0; overflow-wrap: anywhere }
+input[type=date] { border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 5px 8px; color: var(--ink) }
 </style>
 </head>
 <body>
@@ -123,10 +159,12 @@ textarea { width: 100%; min-height: 110px; border: 1px solid var(--line); border
     <div class="tabs" role="tablist">
       <button class="tab" role="tab" id="tab-A" data-v="A" aria-selected="true"><span class="dot" style="background:var(--a)"></span>Aチーム</button>
       <button class="tab" role="tab" id="tab-B" data-v="B" aria-selected="false"><span class="dot" style="background:var(--b)"></span>Bチーム</button>
+      <button class="tab" role="tab" id="tab-R" data-v="R" aria-selected="false">試合記録</button>
       <button class="tab" role="tab" id="tab-T" data-v="T" aria-selected="false">戦術ボード</button>
       <button class="tab" role="tab" id="tab-M" data-v="M" aria-selected="false">部員の登録</button>
     </div>
   </header>
+  <div class="banner" id="backup-banner" hidden></div>
 
   <!-- チーム画面 -->
   <section id="view-team">
@@ -145,19 +183,40 @@ textarea { width: 100%; min-height: 110px; border: 1px solid var(--line); border
       </div>
 
       <div style="display:grid;gap:16px;min-width:0">
-        <div class="panel">
+        <div class="panel" id="match-panel">
+          <div class="bar"><h2>次の試合</h2><span class="grow"></span><button class="btn small primary" id="share-img">画像で共有</button></div>
+          <div class="bar">
+            <input type="date" id="m-date" aria-label="試合の日">
+            <input type="text" id="m-opp" placeholder="相手チーム" aria-label="相手チーム" style="flex:1;min-width:120px">
+          </div>
+          <div class="bar">
+            <label class="sub" for="m-half">試合時間 1本</label><input type="number" id="m-half" min="5" max="60" style="width:62px"><span class="sub">分×2</span>
+          </div>
+          <div class="bar"><span id="att-sum" class="sub"></span><span class="grow"></span><button class="btn small" id="att-toggle">出欠をつける</button></div>
+          <div id="att-list" hidden></div>
+          <div class="bar">
+            <label class="sub" for="pre-sel">スタメン案</label><select id="pre-sel" style="max-width:160px"></select>
+            <button class="btn small" id="pre-load">呼び出す</button><button class="btn small" id="pre-save">今の並びを保存</button><span class="confirm" id="pre-del-box"><button class="btn small" id="pre-del">削除</button></span>
+          </div>
+          <div class="status" id="pre-msg"></div>
+        </div>
+        <div class="panel" id="live-panel">
           <div class="bar">
             <label class="switch"><input type="checkbox" id="t-live"> <span id="t-live-lab">試合モード</span></label>
             <span class="grow"></span>
-            <label for="t-min" class="sub">時間</label>
-            <input type="number" id="t-min" min="0" max="130" placeholder="分" style="width:72px">
+            <span class="clock" id="clock"></span>
           </div>
-          <div class="sub" id="live-desc">試合モードにすると、ピッチとベンチの入れ替えを「交代」として時間つきで記録します。試合が終わったら「試合前に戻す」でスタメンに戻せます。</div>
+          <div class="bar" id="clock-btns"></div>
+          <div class="bar" id="score-row"><span class="score" id="score">0 - 0</span><button class="btn small" id="ev-goal">⚽ 得点</button><button class="btn small" id="ev-against">失点</button><button class="btn small" id="ev-card">カード</button></div>
+          <div id="ev-pick"></div>
+          <div class="bar"><label for="t-min" class="sub">時間(手入力)</label><input type="number" id="t-min" min="0" max="130" placeholder="分" style="width:72px"><span class="sub" id="min-note">タイマーが動いている間は自動で入ります</span></div>
+          <div class="sub" id="live-desc">キックオフを押すと試合モードになり、ピッチとベンチの入れ替えを「交代」として時間つきで記録します。終わったら「記録に保存」。</div>
           <div class="log" id="t-log"></div>
           <div class="bar">
             <button class="btn small" id="t-undo">ひとつ戻す</button>
             <span class="confirm" id="reset-box"><button class="btn small" id="t-reset">試合前に戻す</button></span>
             <span class="grow"></span>
+            <span class="confirm" id="rec-box"><button class="btn small primary" id="rec-save">記録に保存</button></span>
             <button class="btn small" id="t-copy">メンバー表をコピー</button>
           </div>
           <div class="status" id="t-msg"></div>
@@ -171,7 +230,23 @@ textarea { width: 100%; min-height: 110px; border: 1px solid var(--line); border
     </div>
   </section>
 
-  <!-- 部員登録 -->
+  <!-- 試合記録 -->
+  <section id="view-R" hidden>
+    <div class="grid">
+      <div class="panel">
+        <div class="bar"><h2>試合の一覧</h2><span class="grow"></span>
+          <select id="r-team" aria-label="チーム"><option value="all">A・B 両方</option><option value="A">Aチーム</option><option value="B">Bチーム</option></select></div>
+        <div class="kpis" id="r-kpis"></div>
+        <div id="r-list" style="display:grid;gap:8px"></div>
+      </div>
+      <div class="panel">
+        <div class="bar"><h2>個人成績</h2><span class="grow"></span><span class="sub">記録に保存した試合の通算</span></div>
+        <div class="tw"><table id="r-stats"></table></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 戦術ボード -->
   <section id="view-T" hidden>
     <div class="tac-wrap">
       <div class="panel tac-side">
@@ -202,6 +277,9 @@ textarea { width: 100%; min-height: 110px; border: 1px solid var(--line); border
         </div>
         <div class="hint" id="tac-hint"></div>
         <div class="sub">自分たちはスカッド表のスタメンとフォーメーションで並びます(下から上に攻める向き)。スタメンを変えたら「選手を元の配置に」で反映。</div>
+        <h2>作戦の保存</h2>
+        <div class="bar"><input type="text" id="tac-name" placeholder="例)CKのサイン1" style="flex:1;min-width:120px"><button class="btn small primary" id="tac-save">今のボードを保存</button></div>
+        <div class="saved-list" id="tac-saved"></div>
       </div>
       <div class="tac-pitch"><svg id="tac-svg" viewBox="-4 -4 76 113" preserveAspectRatio="xMidYMid meet" role="img" aria-label="戦術ボード"></svg></div>
     </div>
@@ -225,6 +303,13 @@ textarea { width: 100%; min-height: 110px; border: 1px solid var(--line); border
           <input type="file" id="im-file" accept="application/json,.json" hidden>
         </div>
         <div class="status" id="io-msg"></div>
+      </div>
+      <div class="panel">
+        <div class="bar"><h2>紅白戦のチーム分け</h2><span class="grow"></span><button class="btn small" id="kh-all">全員</button><button class="btn small" id="kh-none">外す</button></div>
+        <div class="sub">今日来ている人にチェック → ポジションのバランスを見て2チームに分けます。</div>
+        <div class="check-list" id="kh-list"></div>
+        <div class="bar"><button class="btn primary" id="kh-go">2チームに分ける</button><button class="btn small" id="kh-copy" hidden>コピー</button><span class="status" id="kh-msg"></span></div>
+        <div class="teams2" id="kh-out"></div>
       </div>
       <div class="panel">
         <div class="bar"><h2>部員一覧</h2><span class="grow"></span><span class="sub" id="m-count"></span></div>
@@ -251,11 +336,13 @@ const F = {
   "8人制 2-3-2": [["GK",50,90],["DF",30,71],["DF",70,71],["MF",15,48],["MF",50,50],["MF",85,48],["FW",35,21],["FW",65,21]],
   "7人制 2-3-1": [["GK",50,90],["DF",30,70],["DF",70,70],["MF",18,46],["MF",50,48],["MF",82,46],["FW",50,20]],
   "7人制 3-2-1": [["GK",50,90],["DF",20,70],["DF",50,72],["DF",80,70],["MF",33,46],["MF",67,46],["FW",50,20]],
+  "5人制 1-2-1": [["GK",50,90],["FIXO",50,68],["ALA",18,46],["ALA",82,46],["PIVO",50,22]],
+  "5人制 2-2": [["GK",50,90],["DF",30,66],["DF",70,66],["FW",30,30],["FW",70,30]],
 };
 $("t-form").innerHTML = Object.keys(F).map(k => `<option value="${esc(k)}">${esc(k)}</option>`).join("");
 
 let db = null, members = [], teams = { A: null, B: null }, view = "A", sel = null, unsub = [];
-const blankTeam = () => ({ formation: "4-4-2", lineup: [], subs: [], live: false, log: [], snapshot: null, history: [] });
+const blankTeam = () => ({ formation: "4-4-2", lineup: [], subs: [], live: false, log: [], snapshot: null, history: [], events: [], clock: { st: "pre", at: null }, match: { date: "", opp: "", half: 25, att: {} } });
 const T = () => teams[view] || blankTeam();
 const mById = (id) => members.find(m => m.id === id);
 const teamMembers = (t) => members.filter(m => (m.team || "A") === t).sort((a, b) => (a.no ?? 999) - (b.no ?? 999) || a.name.localeCompare(b.name, "ja"));
@@ -273,8 +360,9 @@ function normTeam(t, key) {
 /* ---------- 描画 ---------- */
 function render() {
   document.querySelectorAll(".tab").forEach(b => b.setAttribute("aria-selected", String(b.dataset.v === view)));
-  $("view-team").hidden = view === "M" || view === "T"; $("view-M").hidden = view !== "M"; $("view-T").hidden = view !== "T";
-  if (view === "M") return renderMembers();
+  $("view-team").hidden = view === "M" || view === "T" || view === "R"; $("view-M").hidden = view !== "M"; $("view-T").hidden = view !== "T"; $("view-R").hidden = view !== "R";
+  if (view === "M") { renderMembers(); return window.membersHook && membersHook(); }
+  if (view === "R") return window.renderRecords && renderRecords();
   if (view === "T") return window.tacticsRender && window.tacticsRender();
   const t = normTeam(T(), view); teams[view] = t;
   document.documentElement.style.setProperty("--team", view === "A" ? "var(--a)" : "var(--b)");
@@ -294,11 +382,15 @@ function render() {
   }).join("");
   // bench & out
   const onPitch = new Set(t.lineup.filter(Boolean)), onBench = new Set(t.subs);
+  const badgeOf = window.chipBadge ? (m, zone) => chipBadge(t, m, zone) : () => "";
   const chip = (m, zone) => `<button class="chip ${zone === "out" ? "out" : ""} ${sel && sel.kind === zone && sel.id === m.id ? "selected" : ""}" data-zone="${zone}" data-id="${m.id}">
-    <span class="no">${esc(m.no ?? "-")}</span>${esc(m.name)}<span class="p">${esc(m.pos || "")}</span></button>`;
+    <span class="no">${esc(m.no ?? "-")}</span>${esc(m.name)}<span class="p">${esc(m.pos || "")}</span>${badgeOf(m, zone)}</button>`;
   $("z-sub").innerHTML = `<span class="lab">サブ(ベンチ) ${t.subs.length}人</span>` + (t.subs.map(id => mById(id)).filter(Boolean).map(m => chip(m, "sub")).join("") || '<span class="sub">ここに選手を置くとサブになります</span>');
-  const outs = teamMembers(view).filter(m => !onPitch.has(m.id) && !onBench.has(m.id));
-  $("z-out").innerHTML = `<span class="lab">メンバー外 ${outs.length}人</span>` + (outs.map(m => chip(m, "out")).join("") || '<span class="sub">全員エントリー済み</span>');
+  const att = (t.match && t.match.att) || {};
+  const outsAll = teamMembers(view).filter(m => !onPitch.has(m.id) && !onBench.has(m.id));
+  const outs = outsAll.filter(m => att[m.id] !== "no"), absent = outsAll.filter(m => att[m.id] === "no");
+  $("z-out").innerHTML = `<span class="lab">メンバー外 ${outs.length}人</span>` + (outs.map(m => chip(m, "out")).join("") || '<span class="sub">全員エントリー済み</span>') +
+    (absent.length ? `<span class="sub" style="width:100%">不参加:${absent.map(m => esc(m.name)).join("、")}</span>` : "");
   document.querySelectorAll(".zone").forEach(z => z.classList.toggle("target", !!sel));
   // log
   $("t-log").innerHTML = (t.log || []).length ? t.log.map(l => `<div><span class="min">${l.min != null && l.min !== "" ? esc(l.min) + "'" : "—"}</span><span class="in">IN ${esc(nameOf(l.inId))}</span><span class="outc">OUT ${esc(nameOf(l.outId))}</span><span class="sub">${esc(l.pos || "")}</span></div>`).join("") : "";
@@ -309,14 +401,15 @@ function render() {
   if (!teamMembers(view).length) {
     $("t-table").innerHTML = `<tr><td class="empty-state">${view}チームの部員がまだいません。「部員の登録」から追加してね。</td></tr>`;
   } else {
-    $("t-table").innerHTML = `<thead><tr><th>背番号</th><th>名前</th><th>ポジション</th><th>本来のポジ</th></tr></thead><tbody>
+    $("t-table").innerHTML = `<thead><tr><th>No.</th><th>名前</th><th>ポジ</th><th>本来</th></tr></thead><tbody>
       <tr class="sec"><td colspan="4">スタメン ${starters.length}/${F[t.formation].length}人 ・ ${esc(t.formation)}</td></tr>` +
-      (starters.map(x => `<tr><td class="no">${esc(x.m.no ?? "")}</td><td>${esc(x.m.name)}${subIn.has(x.m.id) ? ' <span class="in">↑途中出場</span>' : ""}</td><td class="ps">${esc(x.ps)}</td><td class="ps">${esc(x.m.pos || "")}</td></tr>`).join("") || `<tr><td colspan="4" class="sub">ピッチに選手を置くとここに出ます</td></tr>`) +
+      (starters.map(x => `<tr><td class="no">${esc(x.m.no ?? "")}</td><td>${esc(x.m.name)}${subIn.has(x.m.id) ? ' <span class="in">↑途中</span>' : ""}</td><td class="ps">${esc(x.ps)}</td><td class="ps">${esc(x.m.pos || "")}</td></tr>`).join("") || `<tr><td colspan="4" class="sub">ピッチに選手を置くとここに出ます</td></tr>`) +
       `<tr class="sec"><td colspan="4">サブ ${subsM.length}人</td></tr>` +
       (subsM.map(m => `<tr><td class="no">${esc(m.no ?? "")}</td><td>${esc(m.name)}</td><td class="ps">—</td><td class="ps">${esc(m.pos || "")}</td></tr>`).join("") || `<tr><td colspan="4" class="sub">なし</td></tr>`) + "</tbody>";
   }
   $("tbl-count").textContent = `登録 ${teamMembers(view).length}人`;
   setHint();
+  window.teamHook && teamHook(t);
 }
 const nameOf = (id) => (mById(id) || {}).name || "?";
 function setHint() {
@@ -389,7 +482,7 @@ function onPick(p) {
   const t = normTeam(T(), view); pushHist(t);
   if (sel.kind === "slot" && !t.lineup[sel.i] && p.kind === "zone") { sel = null; t.history.pop(); return render(); }
   const lg = place(t, p);
-  if (lg) t.log = [...(t.log || []), { ...lg, min: $("t-min").value === "" ? null : Number($("t-min").value), at: new Date().toISOString() }];
+  if (lg) { t.log = [...(t.log || []), { ...lg, min: window.curMinute ? curMinute(t) : ($("t-min").value === "" ? null : Number($("t-min").value)), at: new Date().toISOString() }]; $("t-min").value = ""; }
   sel = null; teams[view] = t; render(); save(t, lg ? `交代:IN ${nameOf(lg.inId)} / OUT ${nameOf(lg.outId)}` : "");
 }
 $("pitch").addEventListener("click", (e) => { const b = e.target.closest(".slot"); if (b) onPick({ kind: "slot", i: +b.dataset.slot }); });
@@ -418,14 +511,15 @@ $("reset-box").addEventListener("click", (e) => {
     if (!T().snapshot) { $("t-msg").textContent = "試合モードをオンにした時点のスタメンがまだありません。"; return; }
     $("reset-box").innerHTML = `交代記録を消して試合前に戻す? <button class="btn small primary" id="r-yes">戻す</button><button class="btn small" id="r-no">やめる</button>`;
   } else if (id === "r-yes") {
-    const t2 = normTeam(T(), view); pushHist(t2); Object.assign(t2, t2.snapshot, { log: [], live: false, snapshot: null });
+    const t2 = normTeam(T(), view); pushHist(t2); Object.assign(t2, t2.snapshot, { log: [], live: false, snapshot: null, events: [], clock: { st: "pre", at: null } });
     teams[view] = t2; resetBox(); render(); save(t2, "試合前のスタメンに戻した");
   } else if (id === "r-no") resetBox();
 });
 function resetBox() { $("reset-box").innerHTML = `<button class="btn small" id="t-reset">試合前に戻す</button>`; }
 $("t-copy").addEventListener("click", async () => {
   const t = T(); const st = F[t.formation].map(([ps], i) => ({ ps, m: t.lineup[i] && mById(t.lineup[i]) })).filter(x => x.m);
-  const txt = `【${view}チーム メンバー表】${t.formation}\n■スタメン\n` + st.map(x => `${x.ps} ${x.m.no ?? ""} ${x.m.name}`).join("\n") +
+  const mt = t.match || {}; const head = [mt.date ? mt.date.slice(5).replace("-", "/") : "", mt.opp ? "vs " + mt.opp : ""].filter(Boolean).join(" ");
+  const txt = `【${view}チーム メンバー表】${t.formation}${head ? " " + head : ""}\n■スタメン\n` + st.map(x => `${x.ps} ${x.m.no ?? ""} ${x.m.name}`).join("\n") +
     `\n■サブ\n` + (t.subs.map(id => mById(id)).filter(Boolean).map(m => `${m.no ?? ""} ${m.name}(${m.pos || "-"})`).join("\n") || "なし") +
     ((t.log || []).length ? `\n■交代\n` + t.log.map(l => `${l.min != null ? l.min + "分 " : ""}IN ${nameOf(l.inId)} / OUT ${nameOf(l.outId)}`).join("\n") : "");
   try { await navigator.clipboard.writeText(txt); $("t-msg").textContent = "コピーした。LINEなどに貼り付けられるよ。"; }
@@ -497,17 +591,23 @@ try { navigator.storage && navigator.storage.persist && navigator.storage.persis
 
 /* 書き出し・読み込み */
 $("ex-btn").addEventListener("click", () => {
-  const blob = new Blob([JSON.stringify({ app: "squad-board", v: 1, at: new Date().toISOString(), ...store }, null, 1)], { type: "application/json" });
+  store.meta = { ...(store.meta || {}), lastExport: new Date().toISOString() }; persist();
+  let tactics = null; try { tactics = JSON.parse(localStorage.getItem("squad-tactics-v1")); } catch (e) {}
+  const blob = new Blob([JSON.stringify({ app: "squad-board", v: 2, at: new Date().toISOString(), ...store, tactics }, null, 1)], { type: "application/json" });
   const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
   const d = new Date(); a.download = `スカッドボード_${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}.json`;
-  document.body.append(a); a.click(); a.remove(); $("io-msg").textContent = "書き出した。ファイルを移したい端末に送ってね。";
+  document.body.append(a); a.click(); a.remove(); $("io-msg").textContent = "書き出した。ファイルを移したい端末に送ってね。"; window.backupHook && backupHook();
 });
 $("im-file").addEventListener("change", async (e) => {
   const f = e.target.files[0]; if (!f) return;
   try {
     const d = JSON.parse(await f.text()); if (!d || typeof d.members !== "object") throw 0;
     $("io-msg").innerHTML = `部員${Object.keys(d.members).length}人のデータで今の内容を置きかえる? <button class="btn small primary" id="im-yes">置きかえる</button> <button class="btn small" id="im-no">やめる</button>`;
-    $("im-yes").onclick = () => { store = { members: d.members || {}, teams: d.teams || {} }; persist(); teams = { A: null, B: null }; emit("members"); emit("teams"); $("io-msg").textContent = "読み込んだ。"; };
+    $("im-yes").onclick = () => {
+      store = { members: d.members || {}, teams: d.teams || {}, matches: d.matches || {}, presets: d.presets || {}, meta: { ...(d.meta || {}), lastExport: new Date().toISOString() } }; persist();
+      if (d.tactics) { try { localStorage.setItem("squad-tactics-v1", JSON.stringify(d.tactics)); } catch (e) {} }
+      $("io-msg").textContent = "読み込んだ。画面を読み込み直すね。"; setTimeout(() => location.reload(), 600);
+    };
     $("im-no").onclick = () => { $("io-msg").textContent = ""; };
   } catch (err) { $("io-msg").textContent = "このファイルは読み込めなかった。スカッドボードで書き出したファイルを選んでね。"; }
   e.target.value = "";
@@ -520,5 +620,7 @@ render();
 if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
 </script>
 <script src="tactics.js"></script>
+<script src="match.js"></script>
+<script src="club.js"></script>
 </body>
 </html>
