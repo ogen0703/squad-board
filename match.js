@@ -244,6 +244,17 @@ function renderRecords() {
     rows.map((s) => `<tr><td>${mById(s.id) ? `<button class="link" data-player="${s.id}">${esc(s.name)}</button>` : esc(s.name)}${team === "all" ? ` <span class="sub">${esc(s.team)}</span>` : ""}</td><td class="ps">${s.apps}</td><td class="ps">${s.starts}</td><td class="ps">${s.min}分</td><td class="ps">${s.g || ""}</td><td class="ps">${s.a || ""}</td><td class="ps">${s.y ? "🟨" + s.y : ""}${s.rd ? " 🟥" + s.rd : ""}</td></tr>`).join("") + "</tbody>"
     : '<tr><td class="empty-state">記録に保存した試合がまだありません。</td></tr>';
 }
+/** 試合分析(動画)でこの記録とつながっている分 */
+function recAnalysis(r) {
+  const an = store.analysis; if (!an) return "";
+  const ms = (an.matches || []).filter((m) => m.sbRec === r.id); if (!ms.length) return "";
+  const c = {}; ms.forEach((m) => Object.entries(m.counts || {}).forEach(([k, v]) => { c[k] = (c[k] || 0) + v; }));
+  const nm = (k) => ((an.events || []).find((e) => e.id === k) || {}).name || k;
+  const order = ["shot", "shot_against", "chance", "pinch", "win", "lose", "set_us", "set_them", "good", "fix"];
+  const coms = ms.flatMap((m) => Object.entries(m.comments || {})).filter(([, v]) => v && v.trim());
+  return `<div><span class="sub">動画の分析(${ms.map((m) => esc(m.half || "")).filter(Boolean).join("・") || "1本"}):</span>${order.filter((k) => c[k]).map((k) => `${esc(nm(k))} ${c[k]}`).join(" ・ ") || "タグなし"}</div>
+    ${coms.length ? `<div><span class="sub">コメント:</span>${coms.map(([id, v]) => `<b>${esc(nameIn(r, id))}</b> ${esc(v)}`).join("<br>")}</div>` : ""}`;
+}
 function recDetail(r) {
   const ev = [...r.log.map((l) => ({ ...l, k: "sub" })), ...r.events.map((e) => ({ ...e, k: "ev" }))].sort((a, b) => (a.min ?? 999) - (b.min ?? 999));
   const mins = Object.entries(r.minutes).sort((a, b) => b[1] - a[1]);
@@ -251,6 +262,7 @@ function recDetail(r) {
     <div><span class="sub">先発(${esc(r.formation)}・${r.half}分×2):</span>${r.starters.map((id) => esc(nameIn(r, id))).join("、")}</div>
     ${ev.length ? `<div class="log">${ev.map((x) => `<div><span class="min">${x.min != null ? x.min + "'" : "—"}</span>${x.k === "sub" ? `<span class="in">IN ${esc(nameIn(r, x.inId))}</span><span class="outc">OUT ${esc(nameIn(r, x.outId))}</span>` : x.type === "goal" ? `<span class="ev-goal">⚽ ${x.id ? esc(nameIn(r, x.id)) : "オウンゴール"}</span>${x.assistId ? `<span class="sub">(A ${esc(nameIn(r, x.assistId))})</span>` : ""}` : x.type === "against" ? '<span class="ev-against">失点</span>' : `<span>${x.type === "red" ? "🟥" : "🟨"} ${esc(nameIn(r, x.id))}</span>`}</div>`).join("")}</div>` : ""}
     <div><span class="sub">出場時間:</span>${mins.map(([id, m]) => `${esc(nameIn(r, id))} ${m}分`).join(" ・ ")}</div>
+    ${recAnalysis(r)}
     <div class="bar"><span class="confirm" data-recdel-box="${r.id}"><button class="btn small" data-recdel="${r.id}">この記録を消す</button></span></div>
   </div>`;
 }

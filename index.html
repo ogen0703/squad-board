@@ -215,6 +215,15 @@
           <div class="status" id="io-msg"></div>
         </section>
         <section class="block">
+          <h2 class="sec-h">試合分析(動画)の結果を取りこむ</h2>
+          <div class="sub">PCの試合分析アプリの右上「スカッドボード」→「スカッドボード用に書き出す」で作ったファイルを選ぶと、選手の詳細と試合記録に、動画で数えたシュート・奪取・ロストやコメントが出ます。部員や試合記録は変わりません。新しく書き出したら、もう一度取りこむと入れかわります。</div>
+          <div class="bar">
+            <label class="btn" for="an-file">分析のファイルを選ぶ</label>
+            <input type="file" id="an-file" accept="application/json,.json" hidden>
+          </div>
+          <div class="status" id="an-msg"></div>
+        </section>
+        <section class="block">
           <h2 class="sec-h">部の名前</h2>
           <div class="bar"><input type="text" id="club-input" placeholder="サッカー部" style="flex:1"><button class="btn small" id="club-save">変える</button></div>
         </section>

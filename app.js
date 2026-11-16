@@ -286,12 +286,25 @@ $("im-file").addEventListener("change", async (e) => {
     const d = JSON.parse(await f.text()); if (!d || typeof d.members !== "object") throw 0;
     $("io-msg").innerHTML = `部員${Object.keys(d.members).length}人のデータで今の内容を置きかえる? <button class="btn small primary" id="im-yes">置きかえる</button> <button class="btn small" id="im-no">やめる</button>`;
     $("im-yes").onclick = () => {
-      store = { members: d.members || {}, teams: d.teams || {}, matches: d.matches || {}, presets: d.presets || {}, opponents: d.opponents || {}, meta: { ...(d.meta || {}), lastExport: new Date().toISOString() } }; persist();
+      store = { members: d.members || {}, teams: d.teams || {}, matches: d.matches || {}, presets: d.presets || {}, opponents: d.opponents || {}, analysis: d.analysis || null, meta: { ...(d.meta || {}), lastExport: new Date().toISOString() } }; persist();
       if (d.tactics) { try { localStorage.setItem("squad-tactics-v1", JSON.stringify(d.tactics)); } catch (e) {} }
       $("io-msg").textContent = "読み込んだ。画面を読み込み直すね。"; setTimeout(() => location.reload(), 600);
     };
     $("im-no").onclick = () => { $("io-msg").textContent = ""; };
   } catch (err) { $("io-msg").textContent = "このファイルは読み込めなかった。スカッドボードで書き出したファイルを選んでね。"; }
+  e.target.value = "";
+});
+
+/* 試合分析(動画)の結果を取りこむ:部員や試合記録には手をつけず、store.analysis に置くだけ */
+$("an-file").addEventListener("change", async (e) => {
+  const f = e.target.files[0]; if (!f) return;
+  try {
+    const d = JSON.parse(await f.text()); if (!d || d.kind !== "squad-board-link" || typeof d.players !== "object") throw 0;
+    store.analysis = { at: d.exported || new Date().toISOString(), events: d.events || [], players: d.players || {}, matches: d.matches || [] }; persist();
+    const n = Object.keys(d.players).filter((id) => mById(id)).length;
+    $("an-msg").textContent = `取りこんだ。試合${(d.matches || []).length}本・選手${n}人ぶんの分析が、選手の詳細と試合記録に出るよ。`;
+    render();
+  } catch (err) { $("an-msg").textContent = "このファイルは読み込めなかった。試合分析アプリの「スカッドボード用に書き出す」で作ったファイルを選んでね。"; }
   e.target.value = "";
 });
 

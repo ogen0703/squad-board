@@ -70,6 +70,21 @@ function playerStats(id) {
   return s;
 }
 const FEET = ["", "右", "左", "両足"];
+/* 試合分析(動画)の結果 */
+const AN_KEYS = ["shot", "chance", "win", "lose", "good", "save", "fix"];
+const anName = (k) => (((store.analysis || {}).events || []).find((e) => e.id === k) || {}).name || k;
+function analysisSec(id) {
+  const an = store.analysis; if (!an) return "";
+  const p = (an.players || {})[id]; if (!p) return "";
+  const c = p.counts || {}, keys = AN_KEYS.filter((k) => c[k]);
+  const per = p.minutes ? `<div class="sub">動画で見た試合の出場 ${p.minutes}分${p.pm != null ? ` ・ 出ていた時間の得失点 ${p.gf || 0}-${p.ga || 0}(${p.pm > 0 ? "+" : ""}${p.pm})` : ""}</div>` : "";
+  const com = (p.comments || []).slice(0, 5);
+  return `<div class="sheet-sec"><h3 class="sec-h">試合分析(動画)</h3>
+    ${keys.length ? `<div class="statgrid" style="grid-template-columns:repeat(${Math.min(keys.length, 4)},minmax(0,1fr))">${keys.map((k) => `<div><span>${esc(anName(k).replace("ボール", "").replace("・ブロック", ""))}</span><b>${c[k]}</b></div>`).join("")}</div>` : '<div class="sub">動画ではまだタグがついていません。</div>'}
+    ${per}
+    ${com.length ? com.map((x) => `<div class="form-row" style="grid-template-columns:1fr"><span><span class="sub">${fmtDate(x.date)} vs ${esc(x.opp || "(相手未入力)")}</span><br>${esc(x.text).replace(/\n/g, "<br>")}</span></div>`).join("") : ""}
+    <div class="sub">PCの試合分析アプリから取りこんだ数字(${fmtDate((an.at || "").slice(0, 10))}時点)</div></div>`;
+}
 function openPlayer(id) {
   const m = mById(id); if (!m) return;
   const s = playerStats(id);
@@ -77,6 +92,7 @@ function openPlayer(id) {
     <div class="sheet-sec"><h3 class="sec-h">通算</h3>
       <div class="statgrid"><div><span>試合</span><b>${s.apps}</b></div><div><span>先発</span><b>${s.starts}</b></div><div><span>出場時間</span><b>${s.min}</b></div><div><span>得点</span><b>${s.g}</b></div><div><span>アシスト</span><b>${s.a}</b></div></div>
       ${s.y || s.r ? `<div class="sub">警告 ${s.y} ・ 退場 ${s.r}</div>` : ""}</div>
+    ${analysisSec(m.id)}
     <div class="sheet-sec"><h3 class="sec-h">プロフィール</h3>
       <div class="form2" id="pf" data-id="${m.id}">
         <label class="sub" for="pf-pos">ポジション</label><input type="text" id="pf-pos" data-f="pos" value="${esc(m.pos || "")}">
