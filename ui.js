@@ -11,6 +11,7 @@ function renderClub() { $("club-name").textContent = clubName(); document.title 
 $("club-save").addEventListener("click", () => { store.meta = { ...(store.meta || {}), club: $("club-input").value.trim() }; persist(); renderClub(); $("club-input").value = ""; });
 
 /* ---------- ホーム ---------- */
+let rankBy = "g"; // ホームのランキング:g=得点 a=アシスト ga=得点+アシスト
 function renderHome() {
   const keys = ["A", "B"].filter((k) => teamMembers(k).length || (teams[k] && teams[k].match && teams[k].match.date));
   if (!members.length) {
@@ -42,10 +43,18 @@ function renderHome() {
     : '<div class="empty-state">試合を「記録に保存」すると、ここに結果が並びます。</div>';
   const st = {};
   recs.forEach((r) => r.events.forEach((e) => { if (e.type === "goal" && e.id) { const s = st[e.id] = st[e.id] || { id: e.id, name: nameIn(r, e.id), team: r.team, g: 0, a: 0 }; s.g++; } if (e.type === "goal" && e.assistId) { const s = st[e.assistId] = st[e.assistId] || { id: e.assistId, name: nameIn(r, e.assistId), team: r.team, g: 0, a: 0 }; s.a++; } }));
-  const top = Object.values(st).filter((s) => s.g).sort((a, b) => b.g - a.g || b.a - a.a).slice(0, 5);
-  $("home-leaders").innerHTML = top.length ? top.map((s, i) => `<div class="leader"><span class="rk">${i + 1}</span><span><button class="link" data-player="${s.id}">${esc(s.name)}</button> <span class="sub">${s.team}チーム${s.a ? ` ・ ${s.a}アシスト` : ""}</span></span><span class="n">${s.g}</span></div>`).join("")
-    : '<div class="empty-state">得点を記録すると、ここにランキングが出ます。</div>';
+  // 得点 / アシスト / 得点+アシスト。同じ数は同じ順位
+  const val = (s) => (rankBy === "g" ? s.g : rankBy === "a" ? s.a : s.g + s.a);
+  const sub = (s) => (rankBy === "g" ? (s.a ? `${s.a}アシスト` : "") : rankBy === "a" ? (s.g ? `${s.g}得点` : "") : `${s.g}得点 ・ ${s.a}アシスト`);
+  const all = Object.values(st).filter((s) => val(s) > 0).sort((a, b) => val(b) - val(a) || (rankBy === "a" ? b.g - a.g : b.a - a.a) || a.name.localeCompare(b.name, "ja"));
+  const top = all.filter((s, i) => i < 5 || val(s) === val(all[4]));
+  let rk = 0;
+  $("rank-seg").querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", b.dataset.rank === rankBy));
+  $("home-leaders").innerHTML = top.length ? top.map((s, i) => { if (i === 0 || val(s) !== val(top[i - 1])) rk = i + 1;
+      return `<div class="leader"><span class="rk ${rk === 1 ? "top" : ""}">${rk}</span><span><button class="link" data-player="${s.id}">${esc(s.name)}</button> <span class="sub">${s.team}チーム${sub(s) ? ` ・ ${sub(s)}` : ""}</span></span><span class="n">${val(s)}</span></div>`; }).join("")
+    : `<div class="empty-state">${{ g: "得点", a: "アシスト", ga: "得点やアシスト" }[rankBy]}を記録すると、ここにランキングが出ます。</div>`;
 }
+$("rank-seg").addEventListener("click", (e) => { const b = e.target.closest("[data-rank]"); if (!b) return; rankBy = b.dataset.rank; renderHome(); });
 $("view-H").addEventListener("click", (e) => {
   const go = e.target.closest("[data-go]"); if (go) { view = go.dataset.go; sel = null; render(); window.scrollTo({ top: 0 }); return; }
   const ag = e.target.closest("[data-att-go]"); if (ag) { view = ag.dataset.attGo; attOpen = true; render(); $("match-panel").scrollIntoView({ block: "start" }); return; }
