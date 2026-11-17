@@ -263,16 +263,128 @@ function recDetail(r) {
     ${ev.length ? `<div class="log">${ev.map((x) => `<div><span class="min">${x.min != null ? x.min + "'" : "—"}</span>${x.k === "sub" ? `<span class="in">IN ${esc(nameIn(r, x.inId))}</span><span class="outc">OUT ${esc(nameIn(r, x.outId))}</span>` : x.type === "goal" ? `<span class="ev-goal">⚽ ${x.id ? esc(nameIn(r, x.id)) : "オウンゴール"}</span>${x.assistId ? `<span class="sub">(A ${esc(nameIn(r, x.assistId))})</span>` : ""}` : x.type === "against" ? '<span class="ev-against">失点</span>' : `<span>${x.type === "red" ? "🟥" : "🟨"} ${esc(nameIn(r, x.id))}</span>`}</div>`).join("")}</div>` : ""}
     <div><span class="sub">出場時間:</span>${mins.map(([id, m]) => `${esc(nameIn(r, id))} ${m}分`).join(" ・ ")}</div>
     ${recAnalysis(r)}
-    <div class="bar"><span class="confirm" data-recdel-box="${r.id}"><button class="btn small" data-recdel="${r.id}">この記録を消す</button></span></div>
+    ${r.editedAt ? `<div class="sub">${fmtDate(r.editedAt.slice(0, 10))}に直した記録</div>` : ""}
+    <div class="bar"><button class="btn small primary" data-recedit="${r.id}">この記録を直す</button><span class="confirm" data-recdel-box="${r.id}"><button class="btn small" data-recdel="${r.id}">この記録を消す</button></span></div>
   </div>`;
 }
 $("r-team").addEventListener("change", () => renderRecords());
 $("r-list").addEventListener("click", (e) => {
+  const ed = e.target.closest("[data-recedit]"); if (ed) { recEdit(ed.dataset.recedit); return; }
   const h = e.target.closest("[data-rec]"); if (h) { openRec = openRec === h.dataset.rec ? null : h.dataset.rec; return renderRecords(); }
   const d = e.target.closest("[data-recdel]"); if (d) { d.parentElement.innerHTML = `消すと元に戻せない。消す? <button class="btn small primary" data-recyes="${d.dataset.recdel}">消す</button><button class="btn small" data-recno>やめる</button>`; return; }
   const y = e.target.closest("[data-recyes]"); if (y) { delete store.matches[y.dataset.recyes]; persist(); openRec = null; return renderRecords(); }
   if (e.target.closest("[data-recno]")) renderRecords();
 });
+
+/* ---------- 試合記録を直す ---------- */
+let reDraft = null;
+const EV_TYPES = { goal: "得点", against: "失点", yellow: "警告", red: "退場" };
+function recEdit(id) {
+  const r = store.matches[id]; if (!r) return;
+  reDraft = JSON.parse(JSON.stringify({ ...r, starters: r.starters || [], log: r.log || [], events: r.events || [], minutes: r.minutes || {}, names: r.names || {} }));
+  reDraft._id = id; reDraft._manual = false;
+  reRender();
+}
+/** 下書きから計算する出場時間(スタメン・交代・前後半の長さから) */
+function reMinutes(d) { return minutesOf({ lineup: d.starters.filter(Boolean), log: d.log.filter((l) => l.outId || l.inId), events: d.events, match: { half: d.half } }, true); }
+function reName(id) { return (mById(id) || {}).name || reDraft.names[id] || "?"; }
+function rePeople() {
+  const d = reDraft, ms = members.filter((m) => m.name);
+  ms.sort((a, b) => ((a.team || "A") === d.team ? 0 : 1) - ((b.team || "A") === d.team ? 0 : 1) || (a.team || "A").localeCompare(b.team || "A") || (Number(a.no) || 999) - (Number(b.no) || 999));
+  const list = ms.map((m) => ({ id: m.id, label: `${m.no != null && m.no !== "" ? m.no + " " : ""}${m.name}${(m.team || "A") !== d.team ? `(${m.team || "A"})` : ""}` }));
+  const known = new Set(list.map((x) => x.id));
+  Object.keys(d.names).forEach((id) => { if (!known.has(id)) list.push({ id, label: `${d.names[id]}(以前の部員)` }); });
+  return list;
+}
+const reOpts = (cur, none) => `<option value="">${none}</option>` + rePeople().map((p) => `<option value="${p.id}" ${p.id === cur ? "selected" : ""}>${esc(p.label)}</option>`).join("");
+function reRender() {
+  const d = reDraft, sc = { us: d.events.filter((e) => e.type === "goal").length, them: d.events.filter((e) => e.type === "against").length };
+  const mins = d._manual ? d.minutes : reMinutes(d);
+  const played = [...new Set([...d.starters, ...d.log.map((l) => l.inId)].filter(Boolean))];
+  const keep = $("sheet").open ? $("sheet").scrollTop : 0;
+  const people = rePeople().filter((p) => (mById(p.id) || {}).team === d.team || d.starters.includes(p.id) || !mById(p.id));
+  openSheet(`<div class="sheet-head" style="background:var(--dark)"><span class="big-no" style="font-size:2rem">${sc.us}-${sc.them}</span><div><h2>試合記録を直す</h2><span class="sub" style="color:#fff;opacity:.85">vs ${esc(d.opp || "(相手未入力)")} ・ ${fmtDate(d.date)}</span></div><button class="x" data-close aria-label="閉じる">×</button></div>
+  <div class="sheet-sec"><h3 class="sec-h">試合の情報</h3>
+    <div class="form-row" style="grid-template-columns:5.5em 1fr"><span class="sub">日付</span><input type="date" id="re-date" value="${esc(d.date)}"></div>
+    <div class="form-row" style="grid-template-columns:5.5em 1fr"><span class="sub">相手</span><input type="text" id="re-opp" value="${esc(d.opp)}" placeholder="相手チーム"></div>
+    <div class="form-row" style="grid-template-columns:5.5em 1fr"><span class="sub">チーム</span><select id="re-team"><option value="A" ${d.team === "A" ? "selected" : ""}>Aチーム</option><option value="B" ${d.team === "B" ? "selected" : ""}>Bチーム</option></select></div>
+    <div class="form-row" style="grid-template-columns:5.5em 1fr"><span class="sub">試合時間</span><span class="bar"><input type="number" id="re-half" min="5" max="60" value="${esc(d.half)}" style="width:5em">分×2</span></div>
+    <div class="form-row" style="grid-template-columns:5.5em 1fr"><span class="sub">フォーメーション</span><input type="text" id="re-form" value="${esc(d.formation || "")}" placeholder="例)4-4-2"></div>
+    <div class="sub">スコアは下の「得点」「失点」から自動で数えます(いま ${sc.us} - ${sc.them})。</div>
+  </div>
+  <div class="sheet-sec"><h3 class="sec-h">先発(${d.starters.length}人)</h3>
+    <div class="bar">${people.map((p) => `<label class="chip ${d.starters.includes(p.id) ? "" : "out"}" style="padding-right:10px"><input type="checkbox" data-re-st="${p.id}" ${d.starters.includes(p.id) ? "checked" : ""} style="margin:0 2px 0 6px">${esc(p.label)}</label>`).join("")}</div>
+  </div>
+  <div class="sheet-sec"><h3 class="sec-h">交代</h3>
+    ${d.log.map((l, i) => `<div class="form-row" style="grid-template-columns:5.4em 1fr 1fr auto"><span class="bar" style="gap:2px;flex-wrap:nowrap"><input type="number" min="0" max="120" data-re-sub="${i}" data-k="min" value="${l.min ?? ""}" style="width:3.4em">分</span><select data-re-sub="${i}" data-k="outId">${reOpts(l.outId, "OUT(だれが)")}</select><select data-re-sub="${i}" data-k="inId">${reOpts(l.inId, "IN(だれが)")}</select><button class="btn small" data-re-subdel="${i}" aria-label="この交代を消す">✕</button></div>`).join("") || '<div class="sub">交代はありません。</div>'}
+    <div class="bar"><button class="btn small" data-re-subadd>交代を足す</button></div>
+  </div>
+  <div class="sheet-sec"><h3 class="sec-h">得点・失点・カード</h3>
+    ${d.events.map((x, i) => `<div class="form-row" style="grid-template-columns:5.4em 5.2em 1fr auto"><span class="bar" style="gap:2px;flex-wrap:nowrap"><input type="number" min="0" max="120" data-re-ev="${i}" data-k="min" value="${x.min ?? ""}" style="width:3.4em">分</span><select data-re-ev="${i}" data-k="type">${Object.entries(EV_TYPES).map(([k, v]) => `<option value="${k}" ${x.type === k ? "selected" : ""}>${v}</option>`).join("")}</select>
+      <span style="display:grid;gap:4px;min-width:0">${x.type === "against" ? '<span class="sub">相手の得点</span>' : `<select data-re-ev="${i}" data-k="id">${reOpts(x.id, x.type === "goal" ? "オウンゴール(相手)" : "だれ?")}</select>`}${x.type === "goal" ? `<select data-re-ev="${i}" data-k="assistId">${reOpts(x.assistId, "アシストなし")}</select>` : ""}</span>
+      <button class="btn small" data-re-evdel="${i}" aria-label="これを消す">✕</button></div>`).join("") || '<div class="sub">まだありません。</div>'}
+    <div class="bar"><button class="btn small" data-re-evadd="goal">得点を足す</button><button class="btn small" data-re-evadd="against">失点を足す</button><button class="btn small" data-re-evadd="yellow">カードを足す</button></div>
+  </div>
+  <div class="sheet-sec"><h3 class="sec-h">出場時間</h3>
+    <div class="sub">${d._manual ? "手で直した時間です。" : "先発・交代・試合時間から自動で計算しています。数字を直すと、その数字で保存します。"}</div>
+    ${played.map((id) => `<div class="form-row" style="grid-template-columns:1fr auto"><span>${esc(reName(id))}</span><span class="bar" style="gap:2px"><input type="number" min="0" max="120" data-re-min="${id}" value="${mins[id] ?? 0}" style="width:4.2em">分</span></div>`).join("") || '<div class="sub">先発を選ぶと出ます。</div>'}
+    ${d._manual ? '<div class="bar"><button class="btn small" data-re-recalc>自動で計算しなおす</button></div>' : ""}
+  </div>
+  <div class="sheet-sec" style="padding-bottom:20px"><div class="bar"><button class="btn primary" data-re-save>この内容で保存</button><button class="btn" data-close>やめる</button></div><div class="status" id="re-msg"></div></div>`, "var(--dark)");
+  $("sheet").scrollTop = keep;
+}
+const reNum = (v) => (v === "" || v == null ? null : Math.max(0, Math.round(Number(v))));
+$("sheet-body").addEventListener("input", (e) => {
+  if (!reDraft || !e.target.closest) return;
+  const t = e.target, d = reDraft;
+  if (t.id === "re-date") d.date = t.value; else if (t.id === "re-opp") d.opp = t.value; else if (t.id === "re-form") d.formation = t.value;
+  else if (t.id === "re-half") d.half = reNum(t.value) || HALF_DEFAULT;
+  else if (t.dataset.reMin) { if (!d._manual) { d.minutes = reMinutes(d); d._manual = true; } d.minutes[t.dataset.reMin] = reNum(t.value) || 0; }
+  else if (t.dataset.reSub != null && t.dataset.k === "min") d.log[+t.dataset.reSub].min = reNum(t.value);
+  else if (t.dataset.reEv != null && t.dataset.k === "min") d.events[+t.dataset.reEv].min = reNum(t.value);
+});
+$("sheet-body").addEventListener("change", (e) => {
+  if (!reDraft) return;
+  const t = e.target, d = reDraft;
+  if (t.id === "re-team") { d.team = t.value; return reRender(); }
+  if (t.id === "re-half" || (t.dataset.k === "min" && t.dataset.reSub != null)) return d._manual ? null : reRender();
+  if (t.dataset.reSt) { d.starters = t.checked ? [...d.starters, t.dataset.reSt] : d.starters.filter((x) => x !== t.dataset.reSt); return reRender(); }
+  if (t.dataset.reSub != null && t.dataset.k !== "min") { d.log[+t.dataset.reSub][t.dataset.k] = t.value || null; return reRender(); }
+  if (t.dataset.reEv != null && t.dataset.k !== "min") {
+    const x = d.events[+t.dataset.reEv]; x[t.dataset.k] = t.value || null;
+    if (t.dataset.k === "type") { if (x.type !== "goal") delete x.assistId; if (x.type === "against") delete x.id; }
+    return reRender();
+  }
+});
+$("sheet-body").addEventListener("click", (e) => {
+  if (!reDraft) return;
+  const t = e.target.closest("button"); if (!t) return;
+  const d = reDraft, last = Math.max(0, ...d.log.map((l) => l.min || 0), ...d.events.map((x) => x.min || 0));
+  if (t.dataset.reSubadd != null) { d.log.push({ min: last, outId: null, inId: null }); reRender(); }
+  else if (t.dataset.reSubdel != null) { d.log.splice(+t.dataset.reSubdel, 1); reRender(); }
+  else if (t.dataset.reEvadd) { d.events.push({ type: t.dataset.reEvadd, min: last, id: null, at: new Date().toISOString() }); reRender(); }
+  else if (t.dataset.reEvdel != null) { d.events.splice(+t.dataset.reEvdel, 1); reRender(); }
+  else if (t.dataset.reRecalc != null) { d._manual = false; reRender(); }
+  else if (t.dataset.reSave != null) reSave();
+});
+$("sheet").addEventListener("close", () => { reDraft = null; });
+function reSave() {
+  const d = reDraft;
+  if (!d.date) { $("re-msg").textContent = "日付を入れてね"; return; }
+  const log = d.log.filter((l) => l.outId || l.inId).sort((a, b) => (a.min ?? 999) - (b.min ?? 999));
+  const events = d.events.filter((x) => x.type === "against" || x.type === "goal" || x.id).sort((a, b) => (a.min ?? 999) - (b.min ?? 999));
+  const bad = events.find((x) => (x.type === "yellow" || x.type === "red") && !x.id);
+  if (bad) { $("re-msg").textContent = "カードの選手を選んでね"; return; }
+  const draft = { ...d, log, events };
+  const minutes = d._manual ? Object.fromEntries(Object.entries(d.minutes).filter(([, m]) => m > 0)) : reMinutes(draft);
+  const ids = new Set([...d.starters, ...log.flatMap((l) => [l.inId, l.outId]), ...events.flatMap((x) => [x.id, x.assistId]), ...Object.keys(minutes)].filter(Boolean));
+  const id = d._id;
+  const rec = { ...store.matches[id], team: d.team, date: d.date, opp: d.opp.trim(), half: d.half, formation: d.formation, starters: d.starters.filter(Boolean), log, events,
+    us: events.filter((x) => x.type === "goal").length, them: events.filter((x) => x.type === "against").length, minutes,
+    names: Object.fromEntries([...ids].map((x) => [x, reName(x)])), editedAt: new Date().toISOString() };
+  store.matches[id] = rec; persist();
+  reDraft = null; $("sheet").close(); openRec = id; renderRecords();
+}
 
 /* ---------- 画像で共有 ---------- */
 async function squadImage(t, key) {
